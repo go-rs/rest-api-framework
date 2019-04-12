@@ -3,7 +3,14 @@ REST API framework for go lang
 
 # Framework is under development
 ## Status: 
-- Working on POC as per concept
+- Working on POC
+  - Request Interceptors/Middlewares
+  - Routes with URL pattern 
+  - Methods [GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH]
+  - Extend routes with namespace
+  - Error handler
+  - HTTP, HTTPS support
+  
 ```
 var api rest.API
 
