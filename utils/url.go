@@ -1,5 +1,5 @@
 /*!
- * utils-api-framework
+ * rest-api-framework
  * Copyright(c) 2019 Roshan Gade
  * MIT Licensed
  */
