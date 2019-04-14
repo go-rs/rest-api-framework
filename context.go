@@ -6,7 +6,7 @@
 package rest
 
 import (
-	"./render"
+	"github.com/go-rs/rest-api-framework/render"
 	"net/http"
 )
 
@@ -150,10 +150,13 @@ func (ctx *Context) send(data []byte, err error) {
  * Unhandled Exception
  */
 func (ctx *Context) unhandledException() {
-	err := ctx.GetError().Error()
-	ctx.Status(500)
-	if err == "URL_NOT_FOUND" {
-		ctx.Status(404)
+	err := ctx.GetError()
+	if err != nil {
+		msg := err.Error()
+		ctx.Status(500)
+		if msg == "URL_NOT_FOUND" {
+			ctx.Status(404)
+		}
+		ctx.Write([]byte(msg))
 	}
-	ctx.Write([]byte(err))
 }

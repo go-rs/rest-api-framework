@@ -6,21 +6,24 @@
 package rest
 
 import (
-	"./utils"
 	"errors"
 	"fmt"
+	"github.com/go-rs/rest-api-framework/utils"
 	"net/http"
 	"regexp"
 )
+
+type Handler func(ctx *Context)
 
 /**
  * API - Application
  */
 type API struct {
+	prefix       string
 	routes       []route
 	interceptors []interceptor
 	exceptions   []exception
-	unhandled    func(ctx *Context)
+	unhandled    Handler
 }
 
 /**
@@ -31,14 +34,14 @@ type route struct {
 	pattern string
 	regex   *regexp.Regexp
 	params  []string
-	handle  func(ctx *Context)
+	handle  Handler
 }
 
 /**
  * Request interceptor
  */
 type interceptor struct {
-	handle func(ctx *Context)
+	handle Handler
 }
 
 /**
@@ -46,13 +49,13 @@ type interceptor struct {
  */
 type exception struct {
 	message string
-	handle  func(ctx *Context)
+	handle  Handler
 }
 
 /**
  * Common Route
  */
-func (api *API) Route(method string, pattern string, handle func(ctx *Context)) {
+func (api *API) Route(method string, pattern string, handle Handler) {
 	regex, params, err := utils.Compile(pattern)
 	if err != nil {
 		fmt.Println("Error in pattern", err)
@@ -98,8 +101,8 @@ func (api API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 			break
 		}
 
-		if route.method == req.Method && route.regex.Match(urlPath) {
-			ctx.found = true
+		if (route.method == "" || route.method == req.Method) && route.regex.Match(urlPath) {
+			ctx.found = route.method != "" //?
 			ctx.Params = utils.Exec(route.regex, route.params, urlPath)
 			route.handle(&ctx)
 		}
@@ -133,42 +136,46 @@ func (api API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (api *API) Use(handle func(ctx *Context)) {
+func (api *API) Use(handle Handler) {
 	task := interceptor{
 		handle: handle,
 	}
 	api.interceptors = append(api.interceptors, task)
 }
 
-func (api *API) GET(pattern string, handle func(ctx *Context)) {
+func (api *API) All(pattern string, handle Handler) {
+	api.Route("", pattern, handle)
+}
+
+func (api *API) Get(pattern string, handle Handler) {
 	api.Route("GET", pattern, handle)
 }
 
-func (api *API) POST(pattern string, handle func(ctx *Context)) {
+func (api *API) Post(pattern string, handle Handler) {
 	api.Route("POST", pattern, handle)
 }
 
-func (api *API) PUT(pattern string, handle func(ctx *Context)) {
+func (api *API) Put(pattern string, handle Handler) {
 	api.Route("PUT", pattern, handle)
 }
 
-func (api *API) DELETE(pattern string, handle func(ctx *Context)) {
+func (api *API) Delete(pattern string, handle Handler) {
 	api.Route("DELETE", pattern, handle)
 }
 
-func (api *API) OPTIONS(pattern string, handle func(ctx *Context)) {
+func (api *API) Options(pattern string, handle Handler) {
 	api.Route("OPTIONS", pattern, handle)
 }
 
-func (api *API) HEAD(pattern string, handle func(ctx *Context)) {
+func (api *API) Head(pattern string, handle Handler) {
 	api.Route("HEAD", pattern, handle)
 }
 
-func (api *API) PATCH(pattern string, handle func(ctx *Context)) {
+func (api *API) Patch(pattern string, handle Handler) {
 	api.Route("PATCH", pattern, handle)
 }
 
-func (api *API) Exception(err string, handle func(ctx *Context)) {
+func (api *API) Exception(err string, handle Handler) {
 	exp := exception{
 		message: err,
 		handle:  handle,
@@ -176,6 +183,6 @@ func (api *API) Exception(err string, handle func(ctx *Context)) {
 	api.exceptions = append(api.exceptions, exp)
 }
 
-func (api *API) UnhandledException(handle func(ctx *Context)) {
+func (api *API) UnhandledException(handle Handler) {
 	api.unhandled = handle
 }
