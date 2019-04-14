@@ -1,7 +1,7 @@
 package main
 
 import (
-	".."
+	"github.com/go-rs/rest-api-framework"
 	"errors"
 	"fmt"
 	"github.com/go-rs/rest-api-framework/examples/user"
