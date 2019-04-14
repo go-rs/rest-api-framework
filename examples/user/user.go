@@ -1,7 +1,7 @@
 package user
 
 import (
-	"../.."
+	"github.com/go-rs/rest-api-framework"
 )
 
 func APIs(api *rest.API) {
