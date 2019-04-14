@@ -8,9 +8,10 @@ package rest
 import (
 	"errors"
 	"fmt"
-	"github.com/go-rs/rest-api-framework/utils"
 	"net/http"
 	"regexp"
+
+	"github.com/go-rs/rest-api-framework/utils"
 )
 
 type Handler func(ctx *Context)

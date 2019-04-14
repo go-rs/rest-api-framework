@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/go-rs/rest-api-framework"
 	"errors"
 	"fmt"
-	"github.com/go-rs/rest-api-framework/examples/user"
 	"net/http"
+
+	"github.com/go-rs/rest-api-framework"
+	"github.com/go-rs/rest-api-framework/examples/user"
 )
 
 func main() {

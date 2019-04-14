@@ -6,8 +6,9 @@
 package rest
 
 import (
-	"github.com/go-rs/rest-api-framework/render"
 	"net/http"
+
+	"github.com/go-rs/rest-api-framework/render"
 )
 
 /**
