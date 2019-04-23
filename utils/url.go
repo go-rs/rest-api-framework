@@ -12,12 +12,11 @@ import (
 
 const sep = "/"
 
-func Compile(str string) (*regexp.Regexp, []string, error) {
+func Compile(str string) (regex *regexp.Regexp, keys []string, err error) {
 	pattern := ""
-	keys := make([]string, 0)
-	_str := strings.Split(str, "/")
+	keys = make([]string, 0)
 
-	for _, val := range _str {
+	for _, val := range strings.Split(str, "/") {
 		if val != "" {
 			switch val[0] {
 			case 42:
@@ -45,9 +44,8 @@ func Compile(str string) (*regexp.Regexp, []string, error) {
 	// 	pattern += "(?:/)?"
 	// }
 
-	regex, err := regexp.Compile("^" + pattern + "/?$")
-
-	return regex, keys, err
+	regex, err = regexp.Compile("^" + pattern + "/?$")
+	return
 }
 
 func Exec(regex *regexp.Regexp, keys []string, uri []byte) *map[string]string {

@@ -20,8 +20,8 @@ var (
 /**
  * Text Write
  */
-func (j Text) Write(w http.ResponseWriter) ([]byte, error) {
-	data := []byte(j.Body)
+func (j Text) Write(w http.ResponseWriter) (data []byte, err error) {
+	data = []byte(j.Body)
 	w.Header().Set("Content-Type", plainType)
-	return data, nil
+	return
 }
