@@ -6,7 +6,7 @@ REST API framework for go lang
 Released alpha version
 <br>
 See examples 
-  - Request Interceptors/Middlewares
+  - Request Interceptors/Middleware
   - Routes with URL pattern 
   - Methods [GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH]
   - Extend routes with namespace

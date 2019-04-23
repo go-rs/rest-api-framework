@@ -7,7 +7,6 @@ package rest
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"regexp"
 
@@ -59,8 +58,7 @@ type exception struct {
 func (api *API) Route(method string, pattern string, handle Handler) {
 	regex, params, err := utils.Compile(pattern)
 	if err != nil {
-		fmt.Println("Error in pattern", err)
-		panic(1)
+		panic(err)
 	}
 	api.routes = append(api.routes, route{
 		method:  method,

@@ -59,8 +59,10 @@ func (ctx *Context) Set(key string, val interface{}) {
 /**
  * Get request data from context
  */
-func (ctx *Context) Get(key string) interface{} {
-	return ctx.data[key]
+func (ctx *Context) Get(key string) (val interface{}, exists bool) {
+	val = ctx.data[key]
+	exists = val != nil
+	return
 }
 
 /**
