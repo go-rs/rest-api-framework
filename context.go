@@ -136,11 +136,19 @@ func (ctx *Context) Text(data string) {
  * Send data
  */
 func (ctx *Context) send(data []byte, err error) {
-	if ctx.end && err != nil {
+	if ctx.end {
 		return
 	}
+
+	if err != nil {
+		ctx.err = err
+		return
+	}
+
 	ctx.Response.WriteHeader(ctx.status)
 	_, err = ctx.Response.Write(data)
+
+	//TODO: check - should not be recursive
 	if err != nil {
 		ctx.err = err
 		return

@@ -39,7 +39,7 @@ func (j JSON) Write(w http.ResponseWriter) (data []byte, err error) {
 		return
 	}
 
-	if json.Valid(data) {
+	if !json.Valid(data) {
 		err = invalidJson
 		return
 	}
