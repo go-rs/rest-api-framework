@@ -17,7 +17,7 @@ import (
 type Context struct {
 	Request  *http.Request
 	Response http.ResponseWriter
-	Params   *map[string]string
+	Params   map[string]string
 	data     map[string]interface{}
 	err      error
 	status   int

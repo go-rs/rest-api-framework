@@ -48,8 +48,8 @@ func Compile(str string) (regex *regexp.Regexp, keys []string, err error) {
 	return
 }
 
-func Exec(regex *regexp.Regexp, keys []string, uri []byte) *map[string]string {
-	params := make(map[string]string)
+func Exec(regex *regexp.Regexp, keys []string, uri []byte) (params map[string]string) {
+	params = make(map[string]string)
 
 	matches := regex.FindAllSubmatch(uri, -1)
 
@@ -62,5 +62,5 @@ func Exec(regex *regexp.Regexp, keys []string, uri []byte) *map[string]string {
 		}
 	}
 
-	return &params
+	return
 }
