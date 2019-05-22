@@ -29,7 +29,10 @@ var (
  * JSON Write
  */
 func (j JSON) Write(w http.ResponseWriter) (data []byte, err error) {
-	if reflect.TypeOf(j.Body).String() == "string" {
+	_type := reflect.TypeOf(j.Body).String()
+	if _type == "int" || _type == "float64" || _type == "bool" {
+		err = invalidJson
+	} else if _type == "string" {
 		data, err = json.RawMessage(j.Body.(string)).MarshalJSON()
 	} else {
 		data, err = json.Marshal(j.Body)
