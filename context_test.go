@@ -139,7 +139,7 @@ func TestContext_JSON2(t *testing.T) {
 		t.Error("JSON is not working")
 	}
 
-	if !ctx.end {
+	if ctx.end {
 		t.Error("JSON is no executing successfully")
 	}
 	ctx.destroy()
