@@ -6,6 +6,9 @@
 package rest
 
 import (
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -24,6 +27,12 @@ func validateRoute(fun string, method string, url string, t *testing.T) {
 	if flag {
 		t.Error("API: " + fun + " is not working properly")
 	}
+}
+
+func TestAPI_Route(t *testing.T) {
+	a.Route("GET", "/greeting", handle)
+
+	validateRoute("Route", "GET", "/greeting", t)
 }
 
 func TestAPI_Use(t *testing.T) {
@@ -95,5 +104,32 @@ func TestAPI_Exception(t *testing.T) {
 
 	if flag {
 		t.Error("API: Exception is not working properly")
+	}
+}
+
+func TestAPI_ServeHTTP(t *testing.T) {
+	var _api API
+
+	_api.Get("/", func(ctx *Context) {
+		ctx.JSON(`{"message": "Hello World!"}`)
+	})
+
+	dummy := httptest.NewServer(_api)
+	defer dummy.Close()
+
+	res, err := http.Get(dummy.URL)
+
+	if err != nil {
+		t.Error("ServeHTTP error")
+	}
+
+	greeting, err := ioutil.ReadAll(res.Body)
+	res.Body.Close()
+	if err != nil {
+		t.Error("ServeHTTP error")
+	}
+
+	if string(greeting) != `{"message": "Hello World!"}` {
+		t.Error("Response does not match")
 	}
 }
