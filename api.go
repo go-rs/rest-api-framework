@@ -79,6 +79,7 @@ func (api API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	ctx := Context{
 		Request:  req,
 		Response: res,
+		Query:    req.URL.Query(),
 	}
 
 	// STEP 1: initialize context

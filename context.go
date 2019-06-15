@@ -7,6 +7,7 @@ package rest
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/go-rs/rest-api-framework/render"
 )
@@ -17,6 +18,8 @@ import (
 type Context struct {
 	Request  *http.Request
 	Response http.ResponseWriter
+	Query    url.Values
+	Body     map[string]interface{}
 	Params   map[string]string
 	data     map[string]interface{}
 	err      error
