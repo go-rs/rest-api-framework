@@ -16,16 +16,18 @@ import (
  * Context
  */
 type Context struct {
-	Request  *http.Request
-	Response http.ResponseWriter
-	Query    url.Values
-	Body     map[string]interface{}
-	Params   map[string]string
-	data     map[string]interface{}
-	err      error
-	status   int
-	found    bool
-	end      bool
+	Request       *http.Request
+	Response      http.ResponseWriter
+	Query         url.Values
+	Body          map[string]interface{}
+	Params        map[string]string
+	preSendTasks  []func() error
+	postSendTasks []func() error
+	data          map[string]interface{}
+	err           error
+	status        int
+	found         bool
+	end           bool
 }
 
 /**
@@ -33,6 +35,8 @@ type Context struct {
  */
 func (ctx *Context) init() {
 	ctx.data = make(map[string]interface{})
+	ctx.preSendTasks = make([]func() error, 0)
+	ctx.postSendTasks = make([]func() error, 0)
 	ctx.status = 200
 	ctx.found = false
 	ctx.end = false
@@ -134,6 +138,20 @@ func (ctx *Context) Text(data string) {
 	ctx.send(body, err)
 }
 
+/**
+ *
+ */
+func (ctx *Context) PreSend(task func() error) {
+	ctx.preSendTasks = append(ctx.preSendTasks, task)
+}
+
+/**
+ *
+ */
+func (ctx *Context) PostSend(task func() error) {
+	ctx.postSendTasks = append(ctx.postSendTasks, task)
+}
+
 //////////////////////////////////////////////////
 /**
  * Send data
@@ -148,6 +166,11 @@ func (ctx *Context) send(data []byte, err error) {
 		return
 	}
 
+	for _, task := range ctx.preSendTasks {
+		//TODO: handle error
+		_ = task()
+	}
+
 	ctx.Response.WriteHeader(ctx.status)
 	_, err = ctx.Response.Write(data)
 
@@ -155,6 +178,11 @@ func (ctx *Context) send(data []byte, err error) {
 	if err != nil {
 		ctx.err = err
 		return
+	}
+
+	for _, task := range ctx.postSendTasks {
+		//TOD: handle error
+		_ = task()
 	}
 
 	ctx.End()
