@@ -21,6 +21,18 @@ api.Use(func(ctx *rest.Context) {
   ctx.Set("authtoken", "roshangade")
 })
 
+// hooks support on request pre-send or post-send
+// ctx.PreSend(func() error) OR ctx.PostSend(func() error)
+api.Use(func(ctx *rest.Context) {
+  s := time.Now().UnixNano()
+  ctx.PreSend(func() error {
+    x := time.Now().UnixNano() - s
+    ctx.SetHeader("x-runtime", strconv.FormatInt(x/int64(time.Millisecond), 10))
+    return nil
+  })
+})
+
+
 // routes
 api.Get("/", func(ctx *rest.Context) {
   ctx.Text("Hello World!")
