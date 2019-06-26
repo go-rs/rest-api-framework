@@ -17,12 +17,12 @@ type JSON struct {
 	Body interface{}
 }
 
-var (
+const (
 	jsonType = "application/json"
 )
 
 var (
-	invalidJson = errors.New("INVALID_JSON_RESPONSE")
+	ErrInvalidJson = errors.New("INVALID_JSON_RESPONSE")
 )
 
 /**
@@ -31,7 +31,7 @@ var (
 func (j JSON) Write(w http.ResponseWriter) (data []byte, err error) {
 	_type := reflect.TypeOf(j.Body).String()
 	if _type == "int" || _type == "float64" || _type == "bool" {
-		err = invalidJson
+		err = ErrInvalidJson
 	} else if _type == "string" {
 		data, err = json.RawMessage(j.Body.(string)).MarshalJSON()
 	} else {
@@ -43,7 +43,7 @@ func (j JSON) Write(w http.ResponseWriter) (data []byte, err error) {
 	}
 
 	if !json.Valid(data) {
-		err = invalidJson
+		err = ErrInvalidJson
 		return
 	}
 

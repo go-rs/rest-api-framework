@@ -7,7 +7,9 @@ package rest
 
 import (
 	"errors"
+	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -84,6 +86,7 @@ func TestContext_End(t *testing.T) {
 
 func TestContext_Write1(t *testing.T) {
 	ctx.init()
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/", strings.NewReader(""))
 	ctx.Response = httptest.NewRecorder()
 	data := []byte("Hello World")
 	ctx.Write(data)

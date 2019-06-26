@@ -13,8 +13,8 @@ type Text struct {
 	Body string
 }
 
-var (
-	plainType = "text/plain"
+const (
+	plainType = "text/plain;charset=UTF-8"
 )
 
 /**
