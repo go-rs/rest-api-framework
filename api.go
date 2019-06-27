@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"strings"
 
 	"github.com/go-rs/rest-api-framework/utils"
 )
@@ -169,7 +170,7 @@ func (api API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 			break
 		}
 
-		if (route.method == "" || route.method == req.Method) && route.regex.Match(urlPath) {
+		if (route.method == "" || strings.EqualFold(route.method, req.Method)) && route.regex.Match(urlPath) {
 			ctx.found = route.method != "" //?
 			ctx.Params = utils.Exec(route.regex, route.params, urlPath)
 			route.handle(&ctx)
