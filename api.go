@@ -7,8 +7,10 @@ package rest
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"regexp"
+	"strings"
 
 	"github.com/go-rs/rest-api-framework/utils"
 )
@@ -69,22 +71,88 @@ func (api *API) Route(method string, pattern string, handle Handler) {
 	})
 }
 
+func (api *API) Use(handle Handler) {
+	task := interceptor{
+		handle: handle,
+	}
+	api.interceptors = append(api.interceptors, task)
+}
+
+func (api *API) All(pattern string, handle Handler) {
+	api.Route("", pattern, handle)
+}
+
+func (api *API) Get(pattern string, handle Handler) {
+	api.Route(http.MethodGet, pattern, handle)
+}
+
+func (api *API) Post(pattern string, handle Handler) {
+	api.Route(http.MethodPost, pattern, handle)
+}
+
+func (api *API) Put(pattern string, handle Handler) {
+	api.Route(http.MethodPut, pattern, handle)
+}
+
+func (api *API) Delete(pattern string, handle Handler) {
+	api.Route(http.MethodDelete, pattern, handle)
+}
+
+func (api *API) Options(pattern string, handle Handler) {
+	api.Route(http.MethodOptions, pattern, handle)
+}
+
+func (api *API) Head(pattern string, handle Handler) {
+	api.Route(http.MethodHead, pattern, handle)
+}
+
+func (api *API) Patch(pattern string, handle Handler) {
+	api.Route(http.MethodPatch, pattern, handle)
+}
+
+func (api *API) Exception(err string, handle Handler) {
+	exp := exception{
+		message: err,
+		handle:  handle,
+	}
+	api.exceptions = append(api.exceptions, exp)
+}
+
+func (api *API) UnhandledException(handle Handler) {
+	api.unhandled = handle
+}
+
+var (
+	ErrNotFound          = errors.New("URL_NOT_FOUND")
+	ErrUncaughtException = errors.New("UNCAUGHT_EXCEPTION")
+)
+
 /**
  * Required handle for http module
  */
 func (api API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
-	urlPath := []byte(req.URL.Path)
-
+	// STEP 1: initialize context
 	ctx := Context{
 		Request:  req,
 		Response: res,
 		Query:    req.URL.Query(),
 	}
 
-	// STEP 1: initialize context
 	ctx.init()
 	defer ctx.destroy()
+
+	defer func() {
+		err := recover()
+		if err != nil {
+			log.Fatalln("uncaught exception - ", err)
+			if !ctx.end {
+				ctx.err = ErrUncaughtException
+				ctx.unhandledException()
+				return
+			}
+		}
+	}()
 
 	// STEP 2: execute all interceptors
 	for _, task := range api.interceptors {
@@ -96,12 +164,13 @@ func (api API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// STEP 3: check routes
+	urlPath := []byte(req.URL.Path)
 	for _, route := range api.routes {
 		if ctx.end || ctx.err != nil {
 			break
 		}
 
-		if (route.method == "" || route.method == req.Method) && route.regex.Match(urlPath) {
+		if (route.method == "" || strings.EqualFold(route.method, req.Method)) && route.regex.Match(urlPath) {
 			ctx.found = route.method != "" //?
 			ctx.Params = utils.Exec(route.regex, route.params, urlPath)
 			route.handle(&ctx)
@@ -122,7 +191,7 @@ func (api API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	// STEP 5: unhandled exceptions
 	if !ctx.end {
 		if ctx.err == nil && !ctx.found {
-			ctx.err = errors.New("URL_NOT_FOUND")
+			ctx.err = ErrNotFound
 		}
 
 		if api.unhandled != nil {
@@ -134,55 +203,4 @@ func (api API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	if !ctx.end {
 		ctx.unhandledException()
 	}
-}
-
-func (api *API) Use(handle Handler) {
-	task := interceptor{
-		handle: handle,
-	}
-	api.interceptors = append(api.interceptors, task)
-}
-
-func (api *API) All(pattern string, handle Handler) {
-	api.Route("", pattern, handle)
-}
-
-func (api *API) Get(pattern string, handle Handler) {
-	api.Route("GET", pattern, handle)
-}
-
-func (api *API) Post(pattern string, handle Handler) {
-	api.Route("POST", pattern, handle)
-}
-
-func (api *API) Put(pattern string, handle Handler) {
-	api.Route("PUT", pattern, handle)
-}
-
-func (api *API) Delete(pattern string, handle Handler) {
-	api.Route("DELETE", pattern, handle)
-}
-
-func (api *API) Options(pattern string, handle Handler) {
-	api.Route("OPTIONS", pattern, handle)
-}
-
-func (api *API) Head(pattern string, handle Handler) {
-	api.Route("HEAD", pattern, handle)
-}
-
-func (api *API) Patch(pattern string, handle Handler) {
-	api.Route("PATCH", pattern, handle)
-}
-
-func (api *API) Exception(err string, handle Handler) {
-	exp := exception{
-		message: err,
-		handle:  handle,
-	}
-	api.exceptions = append(api.exceptions, exp)
-}
-
-func (api *API) UnhandledException(handle Handler) {
-	api.unhandled = handle
 }

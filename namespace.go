@@ -5,6 +5,8 @@
  */
 package rest
 
+import "net/http"
+
 /**
  * Namespace - Application
  */
@@ -13,7 +15,6 @@ type Namespace struct {
 	api    *API
 }
 
-//TODO: error handling on unset api
 func (n *Namespace) Set(prefix string, api *API) {
 	n.prefix = prefix
 	n.api = api
@@ -28,31 +29,31 @@ func (n *Namespace) All(pattern string, handle Handler) {
 }
 
 func (n *Namespace) Get(pattern string, handle Handler) {
-	n.api.Route("GET", n.prefix+pattern, handle)
+	n.api.Route(http.MethodGet, n.prefix+pattern, handle)
 }
 
 func (n *Namespace) Post(pattern string, handle Handler) {
-	n.api.Route("POST", n.prefix+pattern, handle)
+	n.api.Route(http.MethodPost, n.prefix+pattern, handle)
 }
 
 func (n *Namespace) Put(pattern string, handle Handler) {
-	n.api.Route("PUT", n.prefix+pattern, handle)
+	n.api.Route(http.MethodPut, n.prefix+pattern, handle)
 }
 
 func (n *Namespace) Delete(pattern string, handle Handler) {
-	n.api.Route("DELETE", n.prefix+pattern, handle)
+	n.api.Route(http.MethodDelete, n.prefix+pattern, handle)
 }
 
 func (n *Namespace) Options(pattern string, handle Handler) {
-	n.api.Route("OPTIONS", n.prefix+pattern, handle)
+	n.api.Route(http.MethodOptions, n.prefix+pattern, handle)
 }
 
 func (n *Namespace) Head(pattern string, handle Handler) {
-	n.api.Route("HEAD", n.prefix+pattern, handle)
+	n.api.Route(http.MethodHead, n.prefix+pattern, handle)
 }
 
 func (n *Namespace) Patch(pattern string, handle Handler) {
-	n.api.Route("PATCH", n.prefix+pattern, handle)
+	n.api.Route(http.MethodPatch, n.prefix+pattern, handle)
 }
 
 func (n *Namespace) Exception(err string, handle Handler) {

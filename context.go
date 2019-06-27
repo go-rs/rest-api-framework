@@ -6,37 +6,47 @@
 package rest
 
 import (
+	"bytes"
+	"compress/gzip"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/go-rs/rest-api-framework/render"
 )
+
+type Task func()
 
 /**
  * Context
  */
 type Context struct {
-	Request       *http.Request
-	Response      http.ResponseWriter
-	Query         url.Values
-	Body          map[string]interface{}
-	Params        map[string]string
-	preSendTasks  []func() error
-	postSendTasks []func() error
-	data          map[string]interface{}
-	err           error
-	status        int
-	found         bool
-	end           bool
+	Request         *http.Request
+	Response        http.ResponseWriter
+	Query           url.Values
+	Body            map[string]interface{}
+	Params          map[string]string
+	headers         map[string]string
+	data            map[string]interface{}
+	err             error
+	status          int
+	found           bool
+	end             bool
+	requestSent     bool
+	preTasksCalled  bool
+	postTasksCalled bool
+	preSendTasks    []Task
+	postSendTasks   []Task
 }
 
 /**
  * Initialization of context on every request
  */
 func (ctx *Context) init() {
+	ctx.headers = make(map[string]string)
 	ctx.data = make(map[string]interface{})
-	ctx.preSendTasks = make([]func() error, 0)
-	ctx.postSendTasks = make([]func() error, 0)
+	ctx.preSendTasks = make([]Task, 0)
+	ctx.postSendTasks = make([]Task, 0)
 	ctx.status = 200
 	ctx.found = false
 	ctx.end = false
@@ -84,7 +94,7 @@ func (ctx *Context) Status(code int) *Context {
  * Set Header
  */
 func (ctx *Context) SetHeader(key string, val string) *Context {
-	ctx.Response.Header().Set(key, val)
+	ctx.headers[key] = val
 	return ctx
 }
 
@@ -124,6 +134,7 @@ func (ctx *Context) JSON(data interface{}) {
 		Body: data,
 	}
 	body, err := json.Write(ctx.Response)
+	//ctx.SetHeader("Content-Type", "application/json;charset=UTF-8")
 	ctx.send(body, err)
 }
 
@@ -135,24 +146,49 @@ func (ctx *Context) Text(data string) {
 		Body: data,
 	}
 	body, err := txt.Write(ctx.Response)
+	//ctx.SetHeader("Content-Type", "text/plain;charset=UTF-8")
 	ctx.send(body, err)
 }
 
 /**
  *
  */
-func (ctx *Context) PreSend(task func() error) {
+func (ctx *Context) PreSend(task Task) {
 	ctx.preSendTasks = append(ctx.preSendTasks, task)
 }
 
 /**
  *
  */
-func (ctx *Context) PostSend(task func() error) {
+func (ctx *Context) PostSend(task Task) {
 	ctx.postSendTasks = append(ctx.postSendTasks, task)
 }
 
 //////////////////////////////////////////////////
+func compress(data []byte) (cdata []byte, err error) {
+	var b bytes.Buffer
+	gz := gzip.NewWriter(&b)
+
+	_, err = gz.Write(data)
+	if err != nil {
+		return
+	}
+
+	err = gz.Flush()
+	if err != nil {
+		return
+	}
+
+	err = gz.Close()
+	if err != nil {
+		return
+	}
+
+	cdata = b.Bytes()
+
+	return
+}
+
 /**
  * Send data
  */
@@ -166,23 +202,42 @@ func (ctx *Context) send(data []byte, err error) {
 		return
 	}
 
-	for _, task := range ctx.preSendTasks {
-		//TODO: handle error
-		_ = task()
+	if !ctx.preTasksCalled {
+		ctx.preTasksCalled = true
+		for _, task := range ctx.preSendTasks {
+			task()
+		}
 	}
 
-	ctx.Response.WriteHeader(ctx.status)
-	_, err = ctx.Response.Write(data)
+	if !ctx.requestSent {
+		ctx.requestSent = true
 
-	//TODO: check - should not be recursive
-	if err != nil {
-		ctx.err = err
-		return
+		for key, val := range ctx.headers {
+			ctx.Response.Header().Set(key, val)
+		}
+
+		if strings.Contains(ctx.Request.Header.Get("Accept-Encoding"), "gzip") {
+			data, err = compress(data)
+			if err == nil {
+				ctx.Response.Header().Set("Content-Encoding", "gzip")
+			}
+		}
+
+		ctx.Response.WriteHeader(ctx.status)
+
+		_, err = ctx.Response.Write(data)
+
+		if err != nil {
+			ctx.err = err
+			return
+		}
 	}
 
-	for _, task := range ctx.postSendTasks {
-		//TOD: handle error
-		_ = task()
+	if !ctx.postTasksCalled {
+		ctx.postTasksCalled = true
+		for _, task := range ctx.postSendTasks {
+			task()
+		}
 	}
 
 	ctx.End()
@@ -192,12 +247,25 @@ func (ctx *Context) send(data []byte, err error) {
  * Unhandled Exception
  */
 func (ctx *Context) unhandledException() {
+	defer func() {
+		err := recover()
+		if err != nil {
+			if !ctx.requestSent {
+				ctx.Response.WriteHeader(http.StatusInternalServerError)
+				ctx.Response.Header().Set("Content-Type", "text/plain;charset=UTF-8")
+				_, _ = ctx.Response.Write([]byte("Internal Server Error"))
+			}
+		}
+	}()
+
 	err := ctx.GetError()
+
 	if err != nil {
 		msg := err.Error()
-		ctx.Status(500)
+		ctx.Status(http.StatusInternalServerError)
+		ctx.SetHeader("Content-Type", "text/plain;charset=UTF-8")
 		if msg == "URL_NOT_FOUND" {
-			ctx.Status(404)
+			ctx.Status(http.StatusNotFound)
 		}
 		ctx.Write([]byte(msg))
 	}

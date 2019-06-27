@@ -118,13 +118,13 @@ func TestAPI_ServeHTTP(t *testing.T) {
 	defer dummy.Close()
 
 	res, err := http.Get(dummy.URL)
-
 	if err != nil {
 		t.Error("ServeHTTP error")
+		return
 	}
 
 	greeting, err := ioutil.ReadAll(res.Body)
-	res.Body.Close()
+	_ = res.Body.Close()
 	if err != nil {
 		t.Error("ServeHTTP error")
 	}
