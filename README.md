@@ -56,3 +56,6 @@ fmt.Println("Starting server.")
 
 http.ListenAndServe(":8080", api)
 ```
+
+##### Powered by
+[![GoLand - JetBrains](https://raw.githubusercontent.com/go-rs/rest-api-framework/master/docs/powered-by/logo.svg?sanitize=true)](https://www.jetbrains.com/?from=Go+REST+Services)
