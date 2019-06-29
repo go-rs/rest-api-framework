@@ -6,11 +6,8 @@
 package rest
 
 import (
-	"bytes"
-	"compress/gzip"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/go-rs/rest-api-framework/render"
 )
@@ -134,7 +131,6 @@ func (ctx *Context) JSON(data interface{}) {
 		Body: data,
 	}
 	body, err := json.Write(ctx.Response)
-	//ctx.SetHeader("Content-Type", "application/json;charset=UTF-8")
 	ctx.send(body, err)
 }
 
@@ -146,7 +142,6 @@ func (ctx *Context) Text(data string) {
 		Body: data,
 	}
 	body, err := txt.Write(ctx.Response)
-	//ctx.SetHeader("Content-Type", "text/plain;charset=UTF-8")
 	ctx.send(body, err)
 }
 
@@ -165,30 +160,6 @@ func (ctx *Context) PostSend(task Task) {
 }
 
 //////////////////////////////////////////////////
-func compress(data []byte) (cdata []byte, err error) {
-	var b bytes.Buffer
-	gz := gzip.NewWriter(&b)
-
-	_, err = gz.Write(data)
-	if err != nil {
-		return
-	}
-
-	err = gz.Flush()
-	if err != nil {
-		return
-	}
-
-	err = gz.Close()
-	if err != nil {
-		return
-	}
-
-	cdata = b.Bytes()
-
-	return
-}
-
 /**
  * Send data
  */
@@ -214,13 +185,6 @@ func (ctx *Context) send(data []byte, err error) {
 
 		for key, val := range ctx.headers {
 			ctx.Response.Header().Set(key, val)
-		}
-
-		if strings.Contains(ctx.Request.Header.Get("Accept-Encoding"), "gzip") {
-			data, err = compress(data)
-			if err == nil {
-				ctx.Response.Header().Set("Content-Encoding", "gzip")
-			}
 		}
 
 		ctx.Response.WriteHeader(ctx.status)

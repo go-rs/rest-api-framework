@@ -130,7 +130,7 @@ var (
 /**
  * Required handle for http module
  */
-func (api API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 	// STEP 1: initialize context
 	ctx := Context{

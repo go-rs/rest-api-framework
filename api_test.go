@@ -114,7 +114,7 @@ func TestAPI_ServeHTTP(t *testing.T) {
 		ctx.JSON(`{"message": "Hello World!"}`)
 	})
 
-	dummy := httptest.NewServer(_api)
+	dummy := httptest.NewServer(&_api)
 	defer dummy.Close()
 
 	res, err := http.Get(dummy.URL)
