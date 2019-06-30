@@ -54,7 +54,7 @@ api.Error("UNAUTHORIZED", func(ctx *rest.Context) {
 
 fmt.Println("Starting server.")
 
-http.ListenAndServe(":8080", api)
+http.ListenAndServe(":8080", &api)
 ```
 
 ##### Powered by
