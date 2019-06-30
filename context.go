@@ -21,7 +21,7 @@ type Context struct {
 	Request         *http.Request
 	Response        http.ResponseWriter
 	Query           url.Values
-	Body            map[string]interface{}
+	Body            interface{}
 	Params          map[string]string
 	headers         map[string]string
 	data            map[string]interface{}
