@@ -4,7 +4,7 @@ import (
 	"github.com/go-rs/rest-api-framework"
 )
 
-func APIs(api *rest.API) {
+func Load(api *rest.API) {
 
 	var user rest.Namespace
 

@@ -1,8 +1,7 @@
-/*!
- * rest-api-framework
- * Copyright(c) 2019 Roshan Gade
- * MIT Licensed
- */
+// go-rs/rest-api-framework
+// Copyright(c) 2019 Roshan Gade.  All rights reserved.
+// MIT Licensed
+
 package render
 
 import (
