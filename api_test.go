@@ -1,8 +1,7 @@
-/*!
- * rest-a-framework
- * Copyright(c) 2019 Roshan Gade
- * MIT Licensed
- */
+// go-rs/rest-api-framework
+// Copyright(c) 2019 Roshan Gade. All rights reserved.
+// MIT Licensed
+
 package rest
 
 import (
@@ -92,7 +91,7 @@ func TestAPI_Patch(t *testing.T) {
 }
 
 func TestAPI_Exception(t *testing.T) {
-	a.Exception("UID_NOT_FOUND", handle)
+	a.OnError("UID_NOT_FOUND", handle)
 
 	flag := true
 	for _, route := range a.exceptions {

@@ -1,5 +1,5 @@
 // go-rs/rest-api-framework
-// Copyright(c) 2019 Roshan Gade.  All rights reserved.
+// Copyright(c) 2019 Roshan Gade. All rights reserved.
 // MIT Licensed
 
 package rest
@@ -126,8 +126,8 @@ func (api *API) Patch(pattern string, handle Handler) {
 	api.Route(http.MethodPatch, pattern, handle)
 }
 
-// On method is used to handle a custom errors thrown by users
-func (api *API) On(err string, handle Handler) {
+// OnError method is used to handle a custom errors thrown by users
+func (api *API) OnError(err string, handle Handler) {
 	exp := exception{
 		message: err,
 		handle:  handle,

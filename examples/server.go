@@ -11,7 +11,7 @@ import (
 
 func main() {
 
-	var api = rest.New("")
+	var api = rest.New("/v1")
 
 	user.Load(api)
 
@@ -32,7 +32,7 @@ func main() {
 	})
 
 	// error handler
-	api.Exception("UNAUTHORIZED", func(ctx *rest.Context) {
+	api.OnError("UNAUTHORIZED", func(ctx *rest.Context) {
 		ctx.Status(401).JSON(`{"message": "You are unauthorized"}`)
 	})
 

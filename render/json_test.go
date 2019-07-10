@@ -1,5 +1,5 @@
 // go-rs/rest-api-framework
-// Copyright(c) 2019 Roshan Gade.  All rights reserved.
+// Copyright(c) 2019 Roshan Gade. All rights reserved.
 // MIT Licensed
 
 package render
@@ -14,9 +14,9 @@ func TestJSON_Write1(t *testing.T) {
 		Body: "Hello World",
 	}
 	w := httptest.NewRecorder()
-	_, err := json.Write(w)
+	_, err := json.ToBytes(w)
 
-	if err != invalidJson {
+	if err != errInvalidJson {
 		t.Error("Should not render text")
 	}
 
@@ -30,7 +30,7 @@ func TestJSON_Write2(t *testing.T) {
 		Body: "{\"Message\":\"Hello World\"}",
 	}
 	w := httptest.NewRecorder()
-	_, err := json.Write(w)
+	_, err := json.ToBytes(w)
 
 	if err != nil {
 		t.Error("Should not throw an error")
@@ -46,7 +46,7 @@ func TestJSON_Write3(t *testing.T) {
 		Body: make(map[string]string),
 	}
 	w := httptest.NewRecorder()
-	_, err := json.Write(w)
+	_, err := json.ToBytes(w)
 
 	if err != nil {
 		t.Error("Should not throw an error")
@@ -62,9 +62,9 @@ func TestJSON_Write4(t *testing.T) {
 		Body: true,
 	}
 	w := httptest.NewRecorder()
-	_, err := json.Write(w)
+	_, err := json.ToBytes(w)
 
-	if err != invalidJson {
+	if err != errInvalidJson {
 		t.Error("Should not throw an error")
 	}
 

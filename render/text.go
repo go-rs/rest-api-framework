@@ -1,5 +1,5 @@
 // go-rs/rest-api-framework
-// Copyright(c) 2019 Roshan Gade.  All rights reserved.
+// Copyright(c) 2019 Roshan Gade. All rights reserved.
 // MIT Licensed
 
 package render
@@ -16,10 +16,8 @@ const (
 	plainType = "text/plain;charset=UTF-8"
 )
 
-/**
- * Text Write
- */
-func (j Text) Write(w http.ResponseWriter) (data []byte, err error) {
+// Parse text/string into bytes
+func (j Text) ToBytes(w http.ResponseWriter) (data []byte, err error) {
 	data = []byte(j.Body)
 	w.Header().Set("Content-Type", plainType)
 	return
