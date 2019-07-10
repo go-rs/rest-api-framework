@@ -13,6 +13,8 @@ See examples
   - Error handler
   - HTTP, HTTPS support
   
+## How to use?  
+  
 ```
 var api = rest.New("/v1")
 
@@ -56,6 +58,9 @@ fmt.Println("Starting server.")
 
 http.ListenAndServe(":8080", api)
 ```
+
+## Documentation
+https://godoc.org/github.com/go-rs/rest-api-framework
 
 ##### Powered by
 [![GoLand - JetBrains](https://raw.githubusercontent.com/go-rs/rest-api-framework/master/docs/powered-by/logo.svg?sanitize=true)](https://www.jetbrains.com/?from=Go+REST+Services)
