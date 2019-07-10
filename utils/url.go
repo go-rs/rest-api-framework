@@ -1,5 +1,5 @@
 // go-rs/rest-api-framework
-// Copyright(c) 2019 Roshan Gade.  All rights reserved.
+// Copyright(c) 2019 Roshan Gade. All rights reserved.
 // MIT Licensed
 
 package utils
@@ -11,6 +11,8 @@ import (
 
 const sep = "/"
 
+// Pre-compile pattern/string to avoid runtime or every request execution.
+// Also, it returns keys, which are used in pattern, if any.
 func Compile(str string) (regex *regexp.Regexp, keys []string, err error) {
 	pattern := ""
 	keys = make([]string, 0)
@@ -47,8 +49,13 @@ func Compile(str string) (regex *regexp.Regexp, keys []string, err error) {
 	return
 }
 
+// On URL path match, map every keys with pattern values
 func Exec(regex *regexp.Regexp, keys []string, uri []byte) (params map[string]string) {
 	params = make(map[string]string)
+
+	if len(keys) == 0 {
+		return
+	}
 
 	matches := regex.FindAllSubmatch(uri, -1)
 

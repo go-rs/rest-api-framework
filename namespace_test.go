@@ -1,5 +1,5 @@
 // go-rs/rest-api-framework
-// Copyright(c) 2019 Roshan Gade.  All rights reserved.
+// Copyright(c) 2019 Roshan Gade. All rights reserved.
 // MIT Licensed
 
 package rest
@@ -89,7 +89,7 @@ func TestNamespace_Patch(t *testing.T) {
 }
 
 func TestNamespace_Exception(t *testing.T) {
-	ns.Exception("UID_NOT_FOUND", handle)
+	ns.OnError("UID_NOT_FOUND", handle)
 
 	flag := true
 	for _, route := range api.exceptions {

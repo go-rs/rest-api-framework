@@ -13,8 +13,10 @@ See examples
   - Error handler
   - HTTP, HTTPS support
   
+## How to use?  
+  
 ```
-var api rest.API
+var api = rest.New("/v1")
 
 // request interceptor / middleware
 api.Use(func(ctx *rest.Context) {
@@ -48,14 +50,17 @@ api.Get("/:bar", func(ctx *rest.Context) {
 })
 
 // error handler
-api.Error("UNAUTHORIZED", func(ctx *rest.Context) {
+api.OnError("UNAUTHORIZED", func(ctx *rest.Context) {
   ctx.Text("You are unauthorized")
 })
 
 fmt.Println("Starting server.")
 
-http.ListenAndServe(":8080", &api)
+http.ListenAndServe(":8080", api)
 ```
+
+## Documentation
+https://godoc.org/github.com/go-rs/rest-api-framework
 
 ##### Powered by
 [![GoLand - JetBrains](https://raw.githubusercontent.com/go-rs/rest-api-framework/master/docs/powered-by/logo.svg?sanitize=true)](https://www.jetbrains.com/?from=Go+REST+Services)

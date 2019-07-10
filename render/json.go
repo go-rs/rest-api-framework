@@ -1,5 +1,5 @@
 // go-rs/rest-api-framework
-// Copyright(c) 2019 Roshan Gade.  All rights reserved.
+// Copyright(c) 2019 Roshan Gade. All rights reserved.
 // MIT Licensed
 
 package render
@@ -21,16 +21,14 @@ const (
 )
 
 var (
-	ErrInvalidJson = errors.New("INVALID_JSON_RESPONSE")
+	errInvalidJson = errors.New("INVALID_JSON_RESPONSE")
 )
 
-/**
- * JSON Write
- */
-func (j JSON) Write(w http.ResponseWriter) (data []byte, err error) {
+// Parse json data and product bytes
+func (j JSON) ToBytes(w http.ResponseWriter) (data []byte, err error) {
 	_type := reflect.TypeOf(j.Body).String()
 	if _type == "int" || _type == "float64" || _type == "bool" {
-		err = ErrInvalidJson
+		err = errInvalidJson
 	} else if _type == "string" {
 		data, err = json.RawMessage(j.Body.(string)).MarshalJSON()
 	} else {
@@ -42,7 +40,7 @@ func (j JSON) Write(w http.ResponseWriter) (data []byte, err error) {
 	}
 
 	if !json.Valid(data) {
-		err = ErrInvalidJson
+		err = errInvalidJson
 		return
 	}
 

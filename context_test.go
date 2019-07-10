@@ -1,5 +1,5 @@
 // go-rs/rest-api-framework
-// Copyright(c) 2019 Roshan Gade.  All rights reserved.
+// Copyright(c) 2019 Roshan Gade. All rights reserved.
 // MIT Licensed
 
 package rest
@@ -141,7 +141,7 @@ func TestContext_JSON2(t *testing.T) {
 		t.Error("JSON is not working")
 	}
 
-	if ctx.end {
+	if !ctx.end {
 		t.Error("JSON is no executing successfully")
 	}
 	ctx.destroy()
