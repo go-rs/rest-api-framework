@@ -1,8 +1,6 @@
-/*!
- * rest-api-framework
- * Copyright(c) 2019 Roshan Gade
- * MIT Licensed
- */
+// Copyright(c) 2019 Roshan Gade.  All rights reserved.
+// MIT Licensed
+
 package rest
 
 import "net/http"

@@ -1,8 +1,7 @@
-/*!
- * rest-api-framework
- * Copyright(c) 2019 Roshan Gade
- * MIT Licensed
- */
+// go-rs/rest-api-framework
+// Copyright(c) 2019 Roshan Gade.  All rights reserved.
+// MIT Licensed
+
 package rest
 
 import (
@@ -15,11 +14,16 @@ import (
 	"github.com/go-rs/rest-api-framework/utils"
 )
 
+// Handler function is used to perform a specified task on request.
+// In handler function, you will get rest context object,
+// which carries request, response writer objects and other methods too.
 type Handler func(ctx *Context)
 
-/**
- * API - Application
- */
+// API
+// It provides all methods, which are required to setup all kind of routes.
+// It manages request interceptor/middlewares. which are used to intercept requests calls before performing actual operation,
+// such as authentication, method override, request logger, etc.
+// Also, it handles errors, which are thrown by users
 type API struct {
 	prefix       string
 	routes       []route
@@ -28,9 +32,7 @@ type API struct {
 	unhandled    Handler
 }
 
-/**
- * Route
- */
+// routes, which help to find and execute/perform the exact or matched url path
 type route struct {
 	method  string
 	pattern string
@@ -39,31 +41,34 @@ type route struct {
 	handle  Handler
 }
 
-/**
- * Request interceptor
- */
+// request interceptors, which help to intercept every request before executing the respective route
 type interceptor struct {
 	handle Handler
 }
 
-/**
- * Exception Route
- */
+// user exceptions, which is a common way to handle an error thrown by user
 type exception struct {
 	message string
 	handle  Handler
 }
 
-/**
- * Common Route
- */
+// Initialize an API with prefix value and return the API pointer
+func New(prefix string) *API {
+	return &API{
+		prefix: prefix,
+	}
+}
+
+// Route method is used to define specific routes with handler.
+// You can use http method, declare patten and finally you have to pass handler
 func (api *API) Route(method string, pattern string, handle Handler) {
+	pattern = api.prefix + pattern
 	regex, params, err := utils.Compile(pattern)
 	if err != nil {
 		panic(err)
 	}
 	api.routes = append(api.routes, route{
-		method:  method,
+		method:  strings.ToUpper(method),
 		pattern: pattern,
 		regex:   regex,
 		params:  params,
@@ -71,6 +76,8 @@ func (api *API) Route(method string, pattern string, handle Handler) {
 	})
 }
 
+// Use method is use to declare interceptors/middlewares
+// It executes on all type method request
 func (api *API) Use(handle Handler) {
 	task := interceptor{
 		handle: handle,
@@ -78,39 +85,49 @@ func (api *API) Use(handle Handler) {
 	api.interceptors = append(api.interceptors, task)
 }
 
+// All method is slightly similar to Use method,
+// but in All method you can use pattern before intercepting any request
 func (api *API) All(pattern string, handle Handler) {
 	api.Route("", pattern, handle)
 }
 
+// Get method is used for GET http method with specific pattern
 func (api *API) Get(pattern string, handle Handler) {
 	api.Route(http.MethodGet, pattern, handle)
 }
 
+// Post method is used for POST http method with specific pattern
 func (api *API) Post(pattern string, handle Handler) {
 	api.Route(http.MethodPost, pattern, handle)
 }
 
+// Put method is used for PUT http method with specific pattern
 func (api *API) Put(pattern string, handle Handler) {
 	api.Route(http.MethodPut, pattern, handle)
 }
 
+// Delete method is used for DELETE http method with specific pattern
 func (api *API) Delete(pattern string, handle Handler) {
 	api.Route(http.MethodDelete, pattern, handle)
 }
 
+// Options method is used for OPTIONS http method with specific pattern
 func (api *API) Options(pattern string, handle Handler) {
 	api.Route(http.MethodOptions, pattern, handle)
 }
 
+// Head method is used for HEAD http method with specific pattern
 func (api *API) Head(pattern string, handle Handler) {
 	api.Route(http.MethodHead, pattern, handle)
 }
 
+// Patch method is used for PATCH http method with specific pattern
 func (api *API) Patch(pattern string, handle Handler) {
 	api.Route(http.MethodPatch, pattern, handle)
 }
 
-func (api *API) Exception(err string, handle Handler) {
+// On method is used to handle a custom errors thrown by users
+func (api *API) On(err string, handle Handler) {
 	exp := exception{
 		message: err,
 		handle:  handle,
@@ -118,18 +135,19 @@ func (api *API) Exception(err string, handle Handler) {
 	api.exceptions = append(api.exceptions, exp)
 }
 
+// UnhandledException method is used to handle all unhandled exceptions
 func (api *API) UnhandledException(handle Handler) {
 	api.unhandled = handle
 }
 
+// error variables to handle expected errors
 var (
-	ErrNotFound          = errors.New("URL_NOT_FOUND")
-	ErrUncaughtException = errors.New("UNCAUGHT_EXCEPTION")
+	errNotFound          = errors.New("URL_NOT_FOUND")
+	errUncaughtException = errors.New("UNCAUGHT_EXCEPTION")
 )
 
-/**
- * Required handle for http module
- */
+// It's required handle for http module.
+// Every request travels from this method.
 func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 	// STEP 1: initialize context
@@ -145,12 +163,13 @@ func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	defer func() {
 		err := recover()
 		if err != nil {
-			log.Fatalln("uncaught exception - ", err)
-			if !ctx.end {
-				ctx.err = ErrUncaughtException
+			//TODO: log only with debugger mode
+			log.Println("uncaught exception - ", err)
+			if ctx.end == false {
+				ctx.err = errUncaughtException
 				ctx.unhandledException()
-				return
 			}
+			return
 		}
 	}()
 
@@ -191,7 +210,7 @@ func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	// STEP 5: unhandled exceptions
 	if !ctx.end {
 		if ctx.err == nil && !ctx.found {
-			ctx.err = ErrNotFound
+			ctx.err = errNotFound
 		}
 
 		if api.unhandled != nil {

@@ -10,9 +10,10 @@ import (
 )
 
 func main() {
-	var api rest.API
 
-	user.APIs(&api)
+	var api = rest.New("")
+
+	user.Load(api)
 
 	// request interceptor / middleware
 	// body-parser : json, raw, form-data, etc
@@ -37,5 +38,5 @@ func main() {
 
 	fmt.Println("Starting server.")
 
-	http.ListenAndServe(":8080", &api)
+	http.ListenAndServe(":8080", api)
 }
