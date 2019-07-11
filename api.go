@@ -134,6 +134,17 @@ func (api *API) OnError(code string, handle Handler) {
 	api.exceptions = append(api.exceptions, exp)
 }
 
+// OnErrors method is used to handle a custom errors thrown by users
+func (api *API) OnErrors(codes []string, handle Handler) {
+	for _, code := range codes {
+		exp := exception{
+			code:   code,
+			handle: handle,
+		}
+		api.exceptions = append(api.exceptions, exp)
+	}
+}
+
 // UnhandledException method is used to handle all unhandled exceptions
 func (api *API) UnhandledException(handle Handler) {
 	api.unhandled = handle
@@ -141,8 +152,8 @@ func (api *API) UnhandledException(handle Handler) {
 
 // error variables to handle expected errors
 var (
-	codeNotFound          = "URL_NOT_FOUND"
-	codeUncaughtException = "UNCAUGHT_EXCEPTION"
+	ErrCodeNotFound          = "URL_NOT_FOUND"
+	ErrCodeUncaughtException = "UNCAUGHT_EXCEPTION"
 )
 
 // It's required handle for http module.
@@ -163,7 +174,7 @@ func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 		err := recover()
 		if err != nil {
 			if !ctx.end {
-				ctx.code = codeUncaughtException
+				ctx.code = ErrCodeUncaughtException
 				ctx.err = fmt.Errorf("%v", err)
 				ctx.unhandledException()
 			}
@@ -173,7 +184,7 @@ func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 	// STEP 2: execute all interceptors
 	for _, task := range api.interceptors {
-		if ctx.end || ctx.err != nil {
+		if ctx.end || ctx.code != "" {
 			break
 		}
 
@@ -183,7 +194,7 @@ func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	// STEP 3: check routes
 	urlPath := []byte(req.URL.Path)
 	for _, route := range api.routes {
-		if ctx.end || ctx.err != nil {
+		if ctx.end || ctx.code != "" {
 			break
 		}
 
@@ -208,7 +219,7 @@ func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	// STEP 5: unhandled exceptions
 	if !ctx.end {
 		if ctx.code == "" && !ctx.found {
-			ctx.Throw(codeNotFound)
+			ctx.Throw(ErrCodeNotFound)
 		}
 
 		if api.unhandled != nil {
