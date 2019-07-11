@@ -29,6 +29,7 @@ type Context struct {
 	// for internal use
 	headers         map[string]string
 	data            map[string]interface{}
+	code            string
 	err             error
 	status          int
 	found           bool
@@ -58,6 +59,7 @@ func (ctx *Context) destroy() {
 	ctx.Params = nil
 	ctx.headers = nil
 	ctx.data = nil
+	ctx.code = ""
 	ctx.err = nil
 	ctx.status = 0
 	ctx.found = false
@@ -81,7 +83,7 @@ func (ctx *Context) Get(key string) (val interface{}, exists bool) {
 }
 
 // Delete data
-func (ctx *Context) Delete(key string, val interface{}) {
+func (ctx *Context) Delete(key string) {
 	delete(ctx.data, key)
 }
 
@@ -98,7 +100,13 @@ func (ctx *Context) SetHeader(key string, val string) *Context {
 }
 
 // Caught error in context on throw
-func (ctx *Context) Throw(err error) {
+func (ctx *Context) Throw(code string) {
+	ctx.code = code
+}
+
+// Throw an error with error
+func (ctx *Context) ThrowWithError(code string, err error) {
+	ctx.code = code
 	ctx.err = err
 }
 
@@ -149,11 +157,13 @@ func (ctx *Context) PostSend(task Task) {
 // Send data, which uses bytes or error if any
 // Also, it calls pre-send and post-send registered hooks
 func (ctx *Context) send(data []byte, err error) {
+
 	if ctx.end {
 		return
 	}
 
 	if err != nil {
+		ctx.code = "INVALID_RESPONSE"
 		ctx.err = err
 		ctx.unhandledException()
 		return
@@ -198,28 +208,39 @@ func (ctx *Context) send(data []byte, err error) {
 
 // Unhandled Exception
 func (ctx *Context) unhandledException() {
-	defer func() {
-		err := recover()
-		if err != nil {
-			//TODO: debugger mode
-			log.Println("Unhandled Error: ", err)
-			if !ctx.requestSent {
-				ctx.Response.WriteHeader(http.StatusInternalServerError)
-				ctx.Response.Header().Set("Content-Type", "text/plain;charset=UTF-8")
-				_, _ = ctx.Response.Write([]byte("Internal Server Error"))
-			}
+	defer ctx.recover()
+
+	if ctx.end {
+		return
+	}
+
+	// NOT FOUND handler
+	if ctx.code == codeNotFound {
+		http.NotFound(ctx.Response, ctx.Request)
+		return
+	}
+
+	if ctx.code != "" || ctx.err != nil {
+		msg := ctx.code
+		if ctx.err != nil {
+			msg = ctx.err.Error()
 		}
-	}()
-
-	err := ctx.GetError()
-
-	if err != nil {
-		msg := err.Error()
-		ctx.Status(http.StatusInternalServerError)
 		ctx.SetHeader("Content-Type", "text/plain;charset=UTF-8")
-		if msg == "URL_NOT_FOUND" {
-			ctx.Status(http.StatusNotFound)
-		}
+		ctx.Status(http.StatusInternalServerError)
 		ctx.Write([]byte(msg))
+	}
+}
+
+// recover
+func (ctx *Context) recover() {
+	err := recover()
+	if err != nil {
+		//TODO: debugger mode
+		log.Println("Unhandled Error: ", err)
+		if !ctx.requestSent {
+			ctx.Response.WriteHeader(http.StatusInternalServerError)
+			ctx.Response.Header().Set("Content-Type", "text/plain;charset=UTF-8")
+			_, _ = ctx.Response.Write([]byte("Internal Server Error"))
+		}
 	}
 }

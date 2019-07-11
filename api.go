@@ -5,8 +5,7 @@
 package rest
 
 import (
-	"errors"
-	"log"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -48,8 +47,8 @@ type interceptor struct {
 
 // user exceptions, which is a common way to handle an error thrown by user
 type exception struct {
-	message string
-	handle  Handler
+	code   string
+	handle Handler
 }
 
 // Initialize an API with prefix value and return the API pointer
@@ -127,10 +126,10 @@ func (api *API) Patch(pattern string, handle Handler) {
 }
 
 // OnError method is used to handle a custom errors thrown by users
-func (api *API) OnError(err string, handle Handler) {
+func (api *API) OnError(code string, handle Handler) {
 	exp := exception{
-		message: err,
-		handle:  handle,
+		code:   code,
+		handle: handle,
 	}
 	api.exceptions = append(api.exceptions, exp)
 }
@@ -142,8 +141,8 @@ func (api *API) UnhandledException(handle Handler) {
 
 // error variables to handle expected errors
 var (
-	errNotFound          = errors.New("URL_NOT_FOUND")
-	errUncaughtException = errors.New("UNCAUGHT_EXCEPTION")
+	codeNotFound          = "URL_NOT_FOUND"
+	codeUncaughtException = "UNCAUGHT_EXCEPTION"
 )
 
 // It's required handle for http module.
@@ -151,7 +150,7 @@ var (
 func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 	// STEP 1: initialize context
-	ctx := Context{
+	ctx := &Context{
 		Request:  req,
 		Response: res,
 		Query:    req.URL.Query(),
@@ -163,10 +162,9 @@ func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	defer func() {
 		err := recover()
 		if err != nil {
-			//TODO: log only with debugger mode
-			log.Println("uncaught exception - ", err)
-			if ctx.end == false {
-				ctx.err = errUncaughtException
+			if !ctx.end {
+				ctx.code = codeUncaughtException
+				ctx.err = fmt.Errorf("%v", err)
 				ctx.unhandledException()
 			}
 			return
@@ -179,7 +177,7 @@ func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 			break
 		}
 
-		task.handle(&ctx)
+		task.handle(ctx)
 	}
 
 	// STEP 3: check routes
@@ -192,29 +190,29 @@ func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 		if (route.method == "" || strings.EqualFold(route.method, req.Method)) && route.regex.Match(urlPath) {
 			ctx.found = route.method != "" //?
 			ctx.Params = utils.Exec(route.regex, route.params, urlPath)
-			route.handle(&ctx)
+			route.handle(ctx)
 		}
 	}
 
 	// STEP 4: check handled exceptions
 	for _, exp := range api.exceptions {
-		if ctx.end || ctx.err == nil {
+		if ctx.end || ctx.code == "" {
 			break
 		}
 
-		if exp.message == ctx.err.Error() {
-			exp.handle(&ctx)
+		if exp.code == ctx.code {
+			exp.handle(ctx)
 		}
 	}
 
 	// STEP 5: unhandled exceptions
 	if !ctx.end {
-		if ctx.err == nil && !ctx.found {
-			ctx.err = errNotFound
+		if ctx.code == "" && !ctx.found {
+			ctx.Throw(codeNotFound)
 		}
 
 		if api.unhandled != nil {
-			api.unhandled(&ctx)
+			api.unhandled(ctx)
 		}
 	}
 

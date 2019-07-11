@@ -53,7 +53,7 @@ func TestContext_Status(t *testing.T) {
 
 func TestContext_Throw(t *testing.T) {
 	err := errors.New("test error")
-	ctx.Throw(err)
+	ctx.ThrowWithError("TEST_ERROR", err)
 
 	if ctx.err != err {
 		t.Error("Throw is not working")
@@ -64,7 +64,7 @@ func TestContext_Throw(t *testing.T) {
 
 func TestContext_GetError(t *testing.T) {
 	err := errors.New("test error")
-	ctx.Throw(err)
+	ctx.ThrowWithError("TEST_ERROR", err)
 
 	if ctx.GetError() != err {
 		t.Error("GetError is not working")

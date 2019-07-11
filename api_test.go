@@ -95,7 +95,7 @@ func TestAPI_Exception(t *testing.T) {
 
 	flag := true
 	for _, route := range a.exceptions {
-		if route.message == "UID_NOT_FOUND" {
+		if route.code == "UID_NOT_FOUND" {
 			flag = false
 			break
 		}
