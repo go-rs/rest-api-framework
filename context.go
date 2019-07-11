@@ -23,7 +23,7 @@ type Context struct {
 	Request  *http.Request
 	Response http.ResponseWriter
 	Query    url.Values
-	Body     interface{}
+	Body     map[string]interface{}
 	Params   map[string]string
 
 	// for internal use
@@ -215,7 +215,7 @@ func (ctx *Context) unhandledException() {
 	}
 
 	// NOT FOUND handler
-	if ctx.code == codeNotFound {
+	if ctx.code == ErrCodeNotFound {
 		http.NotFound(ctx.Response, ctx.Request)
 		return
 	}
@@ -223,10 +223,12 @@ func (ctx *Context) unhandledException() {
 	if ctx.code != "" || ctx.err != nil {
 		msg := ctx.code
 		if ctx.err != nil {
-			msg = ctx.err.Error()
+			msg += "\nError: " + ctx.err.Error()
 		}
 		ctx.SetHeader("Content-Type", "text/plain;charset=UTF-8")
-		ctx.Status(http.StatusInternalServerError)
+		if ctx.status > 400 {
+			ctx.Status(http.StatusInternalServerError)
+		}
 		ctx.Write([]byte(msg))
 	}
 }
