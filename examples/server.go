@@ -1,9 +1,10 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/go-rs/rest-api-framework"
 	"github.com/go-rs/rest-api-framework/examples/user"
@@ -19,7 +20,20 @@ func main() {
 	// body-parser : json, raw, form-data, etc
 	// security
 	api.Use(func(ctx *rest.Context) {
+		// way to reproduce uncaught exception
+		//zero, _ := strconv.ParseInt(ctx.Query.Get("zero"), 10, 32)
+		//x := 10/zero
+		//ctx.Set("x", x)
 		ctx.Set("authtoken", "roshangade")
+	})
+
+	// calculate runtime
+	api.Use(func(ctx *rest.Context) {
+		s := time.Now().UnixNano()
+		ctx.PreSend(func() {
+			x := time.Now().UnixNano() - s
+			ctx.SetHeader("X-Runtime", strconv.FormatInt(x/int64(time.Millisecond), 10))
+		})
 	})
 
 	// routes
@@ -28,7 +42,7 @@ func main() {
 	})
 
 	api.Get("/foo", func(ctx *rest.Context) {
-		ctx.Throw(errors.New("UNAUTHORIZED"))
+		ctx.Throw("UNAUTHORIZED")
 	})
 
 	// error handler
@@ -38,5 +52,7 @@ func main() {
 
 	fmt.Println("Starting server.")
 
-	http.ListenAndServe(":8080", api)
+	err := http.ListenAndServe(":8080", api)
+
+	fmt.Println(err)
 }

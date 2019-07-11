@@ -66,10 +66,10 @@ func (n *Namespace) Patch(pattern string, handle Handler) {
 }
 
 // OnError method is an exactly same with API.OnError
-func (n *Namespace) OnError(err string, handle Handler) {
+func (n *Namespace) OnError(code string, handle Handler) {
 	exp := exception{
-		message: err,
-		handle:  handle,
+		code:   code,
+		handle: handle,
 	}
 	n.api.exceptions = append(n.api.exceptions, exp)
 }

@@ -3,7 +3,7 @@ REST API framework for go lang
 
 # Framework is under development
 ## Status: 
-Released alpha version
+Released beta version
 <br>
 See examples 
   - Request Interceptors/Middleware
@@ -27,9 +27,9 @@ api.Use(func(ctx *rest.Context) {
 // ctx.PreSend(func() error) OR ctx.PostSend(func() error)
 api.Use(func(ctx *rest.Context) {
   s := time.Now().UnixNano()
-  ctx.PreSend(func() error {
+  ctx.PreSend(func() {
     x := time.Now().UnixNano() - s
-    ctx.SetHeader("x-runtime", strconv.FormatInt(x/int64(time.Millisecond), 10))
+    ctx.SetHeader("X-Runtime", strconv.FormatInt(x/int64(time.Millisecond), 10))
     return nil
   })
 })
@@ -41,7 +41,7 @@ api.Get("/", func(ctx *rest.Context) {
 })
 
 api.Get("/foo", func(ctx *rest.Context) {
-  ctx.Status(401).Throw(errors.New("UNAUTHORIZED"))
+  ctx.Status(401).Throw("UNAUTHORIZED")
 })
 
 api.Get("/:bar", func(ctx *rest.Context) {
