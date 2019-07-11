@@ -163,6 +163,7 @@ func (ctx *Context) send(data []byte, err error) {
 	}
 
 	if err != nil {
+		ctx.code = "INVALID_RESPONSE"
 		ctx.err = err
 		ctx.unhandledException()
 		return
