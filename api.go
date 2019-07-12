@@ -53,6 +53,7 @@ type exception struct {
 
 // Initialize an API with prefix value and return the API pointer
 func New(prefix string) *API {
+	prefix = utils.TrimSuffix(prefix, "/")
 	return &API{
 		prefix: prefix,
 	}

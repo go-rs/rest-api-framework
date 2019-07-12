@@ -70,3 +70,11 @@ func Exec(regex *regexp.Regexp, keys []string, uri []byte) (params map[string]st
 
 	return
 }
+
+// Trim last occurrence of string
+func TrimSuffix(s, suffix string) string {
+	if strings.HasSuffix(s, suffix) {
+		s = s[:len(s)-len(suffix)]
+	}
+	return s
+}
