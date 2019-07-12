@@ -4,7 +4,10 @@
 
 package rest
 
-import "net/http"
+import (
+	"github.com/go-rs/rest-api-framework/utils"
+	"net/http"
+)
 
 // Namespace is used to extend routes with a specific prefix
 type Namespace struct {
@@ -14,6 +17,7 @@ type Namespace struct {
 
 // Set method is used to set prefix with API
 func (n *Namespace) Set(prefix string, api *API) {
+	prefix = utils.TrimSuffix(prefix, "/")
 	n.prefix = prefix
 	n.api = api
 }
