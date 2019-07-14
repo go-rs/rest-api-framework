@@ -153,8 +153,8 @@ func (api *API) UnhandledException(handle Handler) {
 
 // error variables to handle expected errors
 var (
-	ErrCodeNotFound          = "URL_NOT_FOUND"
-	ErrCodeUncaughtException = "UNCAUGHT_EXCEPTION"
+	ErrCodeNotFound     = "URL_NOT_FOUND"
+	ErrCodeRuntimeError = "RUNTIME_ERROR"
 )
 
 // It's required handle for http module.
@@ -175,7 +175,7 @@ func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 		err := recover()
 		if err != nil {
 			if !ctx.end {
-				ctx.code = ErrCodeUncaughtException
+				ctx.code = ErrCodeRuntimeError
 				ctx.err = fmt.Errorf("%v", err)
 				ctx.unhandledException()
 			}

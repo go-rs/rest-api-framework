@@ -216,17 +216,16 @@ func (ctx *Context) unhandledException() {
 
 	// NOT FOUND handler
 	if ctx.code == ErrCodeNotFound {
-		http.NotFound(ctx.Response, ctx.Request)
-		return
+		ctx.Status(http.StatusNotFound)
 	}
 
 	if ctx.code != "" || ctx.err != nil {
-		msg := ctx.code
+		msg := "Error Code: " + ctx.code
 		if ctx.err != nil {
-			msg += "\nError: " + ctx.err.Error()
+			msg += "\nError Message: " + ctx.err.Error()
 		}
 		ctx.SetHeader("Content-Type", "text/plain;charset=UTF-8")
-		if ctx.status > 400 {
+		if ctx.status < 400 {
 			ctx.Status(http.StatusInternalServerError)
 		}
 		ctx.Write([]byte(msg))
@@ -238,11 +237,9 @@ func (ctx *Context) recover() {
 	err := recover()
 	if err != nil {
 		//TODO: debugger mode
-		log.Println("Unhandled Error: ", err)
+		log.Println("Runtime Error: ", err)
 		if !ctx.requestSent {
-			ctx.Response.WriteHeader(http.StatusInternalServerError)
-			ctx.Response.Header().Set("Content-Type", "text/plain;charset=UTF-8")
-			_, _ = ctx.Response.Write([]byte("Internal Server Error"))
+			http.Error(ctx.Response, "Internal Server Error", http.StatusInternalServerError)
 		}
 	}
 }

@@ -20,7 +20,7 @@ func TestText_Write(t *testing.T) {
 		t.Error("Render text is not valid")
 	}
 
-	if w.Header().Get("Content-Type") != "text/plain" {
+	if w.Header().Get("Content-Type") != "text/plain;charset=UTF-8" {
 		t.Error("Content-Type Header is not set.")
 	}
 }

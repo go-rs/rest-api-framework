@@ -32,7 +32,7 @@ func main() {
 		s := time.Now().UnixNano()
 		ctx.PreSend(func() {
 			x := time.Now().UnixNano() - s
-			ctx.SetHeader("X-Runtime", strconv.FormatInt(x/int64(time.Millisecond), 10))
+			ctx.SetHeader("X-Runtime", strconv.FormatInt(x/int64(time.Microsecond), 10))
 		})
 	})
 
@@ -52,7 +52,11 @@ func main() {
 
 	fmt.Println("Starting server.")
 
-	err := http.ListenAndServe(":8080", api)
+	server := http.Server{
+		Addr:    ":8080",
+		Handler: api,
+	}
 
+	err := server.ListenAndServe()
 	fmt.Println(err)
 }

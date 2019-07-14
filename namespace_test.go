@@ -88,7 +88,7 @@ func TestNamespace_Patch(t *testing.T) {
 	validateNsRoute("Patch", "PATCH", "/test/:uid", t)
 }
 
-func TestNamespace_Exception(t *testing.T) {
+func TestNamespace_OnError(t *testing.T) {
 	ns.OnError("UID_NOT_FOUND", handle)
 
 	flag := true
