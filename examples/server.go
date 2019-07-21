@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -43,6 +44,7 @@ func main() {
 
 	api.Get("/foo", func(ctx *rest.Context) {
 		ctx.Throw("UNAUTHORIZED")
+		// can also use ctx.ThrowWithError("SERVER_ERROR", error)
 	})
 
 	// error handler
@@ -52,11 +54,15 @@ func main() {
 
 	fmt.Println("Starting server.")
 
+	tout := http.TimeoutHandler(api, 100*time.Millisecond, "timeout")
+
 	server := http.Server{
 		Addr:    ":8080",
-		Handler: api,
+		Handler: tout,
 	}
 
-	err := server.ListenAndServe()
-	fmt.Println(err)
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatalf("could not start server, %v", err)
+	}
+
 }

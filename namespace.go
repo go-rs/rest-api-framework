@@ -5,8 +5,9 @@
 package rest
 
 import (
-	"github.com/go-rs/rest-api-framework/utils"
 	"net/http"
+
+	"github.com/go-rs/rest-api-framework/utils"
 )
 
 // Namespace is used to extend routes with a specific prefix
@@ -16,10 +17,12 @@ type Namespace struct {
 }
 
 // Set method is used to set prefix with API
-func (n *Namespace) Set(prefix string, api *API) {
+func Extend(prefix string, api *API) *Namespace {
 	prefix = utils.TrimSuffix(prefix, "/")
-	n.prefix = prefix
-	n.api = api
+	return &Namespace{
+		prefix: prefix,
+		api:    api,
+	}
 }
 
 // Use method is used to set interceptors/middlewares for all requests,

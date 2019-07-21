@@ -6,9 +6,7 @@ import (
 
 func Load(api *rest.API) {
 
-	var user rest.Namespace
-
-	user.Set("/user", api)
+	var user = rest.Extend("/user", api)
 
 	user.Use(func(ctx *rest.Context) {
 		println("User middleware > /user/*")
