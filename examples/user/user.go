@@ -4,6 +4,7 @@ import (
 	"github.com/go-rs/rest-api-framework"
 )
 
+// just a simple method, can use in better way
 func Load(api *rest.API) {
 
 	var user = rest.Extend("/user", api)

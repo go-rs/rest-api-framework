@@ -171,6 +171,7 @@ func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	ctx.init()
 	defer ctx.destroy()
 
+	// recovery/handle any runtime error
 	defer func() {
 		err := recover()
 		if err != nil {
@@ -183,9 +184,18 @@ func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 		}
 	}()
 
+	// On context done, stop execution
+	go func() {
+		c := req.Context()
+		select {
+		case <-c.Done():
+			ctx.End()
+		}
+	}()
+
 	// STEP 2: execute all interceptors
 	for _, task := range api.interceptors {
-		if ctx.end || ctx.code != "" {
+		if ctx.shouldBreak() {
 			break
 		}
 
@@ -195,12 +205,11 @@ func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	// STEP 3: check routes
 	urlPath := []byte(req.URL.Path)
 	for _, route := range api.routes {
-		if ctx.end || ctx.code != "" {
+		if ctx.shouldBreak() {
 			break
 		}
 
 		if (route.method == "" || strings.EqualFold(route.method, req.Method)) && route.regex.Match(urlPath) {
-			ctx.found = route.method != "" //?
 			ctx.Params = utils.Exec(route.regex, route.params, urlPath)
 			route.handle(ctx)
 		}
@@ -208,21 +217,23 @@ func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 	// STEP 4: check handled exceptions
 	for _, exp := range api.exceptions {
-		if ctx.end || ctx.code == "" {
+		if ctx.shouldBreak() {
 			break
 		}
 
-		if exp.code == ctx.code {
+		if strings.EqualFold(exp.code, ctx.code) {
 			exp.handle(ctx)
 		}
 	}
 
 	// STEP 5: unhandled exceptions
 	if !ctx.end {
-		if ctx.code == "" && !ctx.found {
+		// if no error and still not ended that means it NOT FOUND
+		if ctx.code == "" {
 			ctx.Throw(ErrCodeNotFound)
 		}
 
+		// if user has custom unhandled function, then execute it
 		if api.unhandled != nil {
 			api.unhandled(ctx)
 		}

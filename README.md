@@ -77,9 +77,6 @@ user.Get("/:uid", func(ctx *rest.Context) {
 })
 ```
 
-###Pending 
-- Stop execution on timeout/abort
-
 ## Documentation
 https://godoc.org/github.com/go-rs/rest-api-framework
 
