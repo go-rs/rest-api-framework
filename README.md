@@ -59,6 +59,27 @@ fmt.Println("Starting server.")
 http.ListenAndServe(":8080", api)
 ```
 
+
+## Extend routes
+```
+var user = rest.Extend("/user", api)
+
+user.Use(func(ctx *rest.Context) {
+    //User middleware will execute for /user/* routes
+})
+
+user.Get("/:uid/profile", func(ctx *rest.Context) {
+    ctx.JSON(`{"user": "profile"}`)
+})
+
+user.Get("/:uid", func(ctx *rest.Context) {
+    ctx.JSON(ctx.Params)
+})
+```
+
+###Pending 
+- Stop execution on timeout/abort
+
 ## Documentation
 https://godoc.org/github.com/go-rs/rest-api-framework
 

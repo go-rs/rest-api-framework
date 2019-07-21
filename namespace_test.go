@@ -9,11 +9,11 @@ import (
 )
 
 var api API
-var ns Namespace
+var ns *Namespace
 var handle Handler
 
-func TestNamespace_Set(t *testing.T) {
-	ns.Set("/test", &api)
+func TestExtend(t *testing.T) {
+	ns = Extend("/test", &api)
 
 	if ns.prefix != "/test" {
 		t.Error("Prefix is not set.")
@@ -88,7 +88,7 @@ func TestNamespace_Patch(t *testing.T) {
 	validateNsRoute("Patch", "PATCH", "/test/:uid", t)
 }
 
-func TestNamespace_Exception(t *testing.T) {
+func TestNamespace_OnError(t *testing.T) {
 	ns.OnError("UID_NOT_FOUND", handle)
 
 	flag := true

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -32,7 +33,7 @@ func main() {
 		s := time.Now().UnixNano()
 		ctx.PreSend(func() {
 			x := time.Now().UnixNano() - s
-			ctx.SetHeader("X-Runtime", strconv.FormatInt(x/int64(time.Millisecond), 10))
+			ctx.SetHeader("X-Runtime", strconv.FormatInt(x/int64(time.Microsecond), 10))
 		})
 	})
 
@@ -43,6 +44,7 @@ func main() {
 
 	api.Get("/foo", func(ctx *rest.Context) {
 		ctx.Throw("UNAUTHORIZED")
+		// can also use ctx.ThrowWithError("SERVER_ERROR", error)
 	})
 
 	// error handler
@@ -52,7 +54,15 @@ func main() {
 
 	fmt.Println("Starting server.")
 
-	err := http.ListenAndServe(":8080", api)
+	tout := http.TimeoutHandler(api, 100*time.Millisecond, "timeout")
 
-	fmt.Println(err)
+	server := http.Server{
+		Addr:    ":8080",
+		Handler: tout,
+	}
+
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatalf("could not start server, %v", err)
+	}
+
 }

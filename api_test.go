@@ -90,7 +90,7 @@ func TestAPI_Patch(t *testing.T) {
 	validateRoute("Patch", "PATCH", "/:uid", t)
 }
 
-func TestAPI_Exception(t *testing.T) {
+func TestAPI_OnError(t *testing.T) {
 	a.OnError("UID_NOT_FOUND", handle)
 
 	flag := true
