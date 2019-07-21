@@ -54,11 +54,11 @@ func main() {
 
 	fmt.Println("Starting server.")
 
-	tout := http.TimeoutHandler(api, 100*time.Millisecond, "timeout")
+	//tout := http.TimeoutHandler(api, 100*time.Millisecond, "timeout")
 
 	server := http.Server{
 		Addr:    ":8080",
-		Handler: tout,
+		Handler: api, //tout,
 	}
 
 	if err := server.ListenAndServe(); err != nil {

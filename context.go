@@ -5,6 +5,7 @@
 package rest
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -32,7 +33,6 @@ type Context struct {
 	code            string
 	err             error
 	status          int
-	found           bool
 	end             bool
 	requestSent     bool
 	preTasksCalled  bool
@@ -62,7 +62,6 @@ func (ctx *Context) destroy() {
 	ctx.code = ""
 	ctx.err = nil
 	ctx.status = 0
-	ctx.found = false
 	ctx.end = false
 	ctx.requestSent = false
 	ctx.preTasksCalled = false
@@ -154,6 +153,10 @@ func (ctx *Context) PostSend(task Task) {
 }
 
 //////////////////////////////////////////////////
+func (ctx *Context) shouldBreak() (flag bool) {
+	return ctx.end || ctx.code != ""
+}
+
 // Send data, which uses bytes or error if any
 // Also, it calls pre-send and post-send registered hooks
 func (ctx *Context) send(data []byte, err error) {
@@ -191,7 +194,7 @@ func (ctx *Context) send(data []byte, err error) {
 
 		if err != nil {
 			//TODO: debugger mode
-			log.Println("Response Error: ", err)
+			log.Printf("response error: %v", err)
 		}
 	}
 
@@ -220,9 +223,9 @@ func (ctx *Context) unhandledException() {
 	}
 
 	if ctx.code != "" || ctx.err != nil {
-		msg := "Error Code: " + ctx.code
+		msg := fmt.Sprintf("error code: %v", ctx.code)
 		if ctx.err != nil {
-			msg += "\nError Message: " + ctx.err.Error()
+			msg += fmt.Sprintf("\nerror message: %v", ctx.err)
 		}
 		ctx.SetHeader("Content-Type", "text/plain;charset=UTF-8")
 		if ctx.status < 400 {
@@ -237,9 +240,9 @@ func (ctx *Context) recover() {
 	err := recover()
 	if err != nil {
 		//TODO: debugger mode
-		log.Println("Runtime Error: ", err)
+		log.Printf("runtime error: %v", err)
 		if !ctx.requestSent {
-			http.Error(ctx.Response, "Internal Server Error", http.StatusInternalServerError)
+			http.Error(ctx.Response, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 	}
 }
