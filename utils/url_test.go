@@ -118,15 +118,15 @@ func TestCompile4(t *testing.T) {
 }
 
 // wildcard character
-var regex1, keys1, _ = Compile("/*")
-var str1 = []byte("/foo/bar")
+var regex1, keys1, _ = Compile("/foo/bar/:uid/awesome/beez/*")
+var str1 = "/foo/bar/uid/awesome/beez/x"
 
 // wildcard
 func TestExec1(t *testing.T) {
 	var x map[string]string
 	x = Exec(regex1, keys1, str1)
 
-	if x["*"] != "/foo/bar" {
+	if x["*"] != "/x" {
 		t.Error("Error in asterisk")
 	}
 }
@@ -138,8 +138,8 @@ func BenchmarkExec1(b *testing.B) {
 }
 
 // params
-var regex2, keys2, _ = Compile("/:foo/:bar")
-var str2 = []byte("/foo/bar")
+var regex2, keys2, _ = Compile("/hello/world/:foo/user/:bar")
+var str2 = "/hello/world/foo/user/bar"
 
 func TestExec2(t *testing.T) {
 	var x map[string]string
@@ -158,7 +158,7 @@ func BenchmarkExec2(b *testing.B) {
 
 // plain text
 var regex3, keys3, _ = Compile("/foo/bar")
-var str3 = []byte("/foo/bar")
+var str3 = "/foo/bar"
 
 func TestExec3(t *testing.T) {
 	var x map[string]string
@@ -177,7 +177,7 @@ func BenchmarkExec3(b *testing.B) {
 
 // optional param
 var regex4, keys4, _ = Compile("/foo/:bar?")
-var str4 = []byte("/foo/bar")
+var str4 = "/foo/bar"
 
 func TestExec4(t *testing.T) {
 	var x map[string]string
@@ -187,7 +187,7 @@ func TestExec4(t *testing.T) {
 		t.Error("Error in optional")
 	}
 
-	x = Exec(regex4, keys4, []byte("/foo"))
+	x = Exec(regex4, keys4, "/foo")
 
 	if x["bar"] != "" {
 		t.Error("Error in optional")

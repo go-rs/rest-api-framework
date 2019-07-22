@@ -107,13 +107,13 @@ func TestAPI_OnError(t *testing.T) {
 }
 
 func TestAPI_ServeHTTP(t *testing.T) {
-	var _api API
+	var api = New("/")
 
-	_api.Get("/", func(ctx *Context) {
+	api.Get("/", func(ctx *Context) {
 		ctx.JSON(`{"message": "Hello World!"}`)
 	})
 
-	dummy := httptest.NewServer(&_api)
+	dummy := httptest.NewServer(api)
 	defer dummy.Close()
 
 	res, err := http.Get(dummy.URL)
@@ -129,6 +129,37 @@ func TestAPI_ServeHTTP(t *testing.T) {
 	}
 
 	if string(greeting) != `{"message": "Hello World!"}` {
-		t.Error("Response does not match")
+		t.Error("Response does not match", string(greeting))
+	}
+}
+
+func BenchmarkAPI_ServeHTTP(b *testing.B) {
+	b.StopTimer()
+
+	var api = New("/v1")
+
+	api.Use(func(ctx *Context) {
+		ctx.Set("token", "xyz")
+		ctx.Set("key", "foo")
+		ctx.Set("user", "bar")
+		ctx.Set("api", "abc")
+	})
+
+	// routes
+	api.Get("/", func(ctx *Context) {
+		ctx.JSON(`{"message": "Hello World!"}`)
+	})
+
+	api.Get("/user/:id/profile", func(ctx *Context) {
+		ctx.JSON(`{"message": "Hello User!"}`)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/user/1/profile", nil)
+	res := httptest.NewRecorder()
+
+	for n := 0; n < b.N; n++ {
+		b.StartTimer()
+		api.ServeHTTP(res, req)
+		b.StopTimer()
 	}
 }

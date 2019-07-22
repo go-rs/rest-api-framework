@@ -50,21 +50,23 @@ func Compile(str string) (regex *regexp.Regexp, keys []string, err error) {
 }
 
 // On URL path match, map every keys with pattern values
-func Exec(regex *regexp.Regexp, keys []string, uri []byte) (params map[string]string) {
+func Exec(regex *regexp.Regexp, keys []string, uri string) (params map[string]string) {
 	params = make(map[string]string)
 
 	if len(keys) == 0 {
 		return
 	}
 
-	matches := regex.FindAllSubmatch(uri, -1)
+	matches := regex.FindAllStringSubmatch(uri, -1)
 
-	for _, val := range matches {
+	if len(matches) > 0 {
+		val := matches[0]
 		for i, k := range val[1:] {
-			params[keys[i]] = string(k)
-			if keys[i] == "*" {
-				params["*"] = sep + params["*"]
-			}
+			params[keys[i]] = k
+		}
+
+		if params["*"] != "" {
+			params["*"] = sep + params["*"]
 		}
 	}
 

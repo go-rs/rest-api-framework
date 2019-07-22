@@ -203,13 +203,13 @@ func (api *API) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// STEP 3: check routes
-	urlPath := []byte(req.URL.Path)
+	urlPath := req.URL.Path
 	for _, route := range api.routes {
 		if ctx.shouldBreak() {
 			break
 		}
 
-		if (route.method == "" || strings.EqualFold(route.method, req.Method)) && route.regex.Match(urlPath) {
+		if (route.method == "" || strings.EqualFold(route.method, req.Method)) && route.regex.MatchString(urlPath) {
 			ctx.Params = utils.Exec(route.regex, route.params, urlPath)
 			route.handle(ctx)
 		}
