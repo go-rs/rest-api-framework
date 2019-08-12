@@ -3,7 +3,8 @@ REST API framework for go lang
 
 # Framework is under development
 ## Status: 
-Released beta version
+- Released beta version
+- Working on feedback (Note: potential breaking changes)
 <br>
 See examples 
   - Request Interceptors/Middleware
