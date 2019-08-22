@@ -1,20 +1,21 @@
 package rest
 
-type handler func()
+import "log"
 
 type middleware struct {
-	task handler
+	pattern *pattern
+	task    Handler
 }
 
 type route struct {
 	method  string
-	pattern string
-	task    handler
+	pattern *pattern
+	task    Handler
 }
 
 type exception struct {
 	code string
-	task handler
+	task ErrorHandler
 }
 
 type list struct {
@@ -23,18 +24,30 @@ type list struct {
 	exceptions  []exception
 }
 
-func (l *list) middleware(task handler) {
-	l.middlewares = append(l.middlewares, middleware{task: task})
+func (l *list) middleware(str string, task Handler) {
+	p := &pattern{
+		value: trim(str) + "/*",
+	}
+	if err := p.compile(); err != nil {
+		log.Fatalf("Failed to compile %v", str)
+	}
+	l.middlewares = append(l.middlewares, middleware{pattern: p, task: task})
 }
 
-func (l *list) route(method string, pattern string, task handler) {
+func (l *list) route(method string, str string, task Handler) {
+	p := &pattern{
+		value: trim(str),
+	}
+	if err := p.compile(); err != nil {
+		log.Fatalf("Failed to compile %v", str)
+	}
 	l.routes = append(l.routes, route{
 		method:  method,
-		pattern: pattern,
+		pattern: p,
 		task:    task,
 	})
 }
 
-func (l *list) exception(code string, task handler) {
-	l.exceptions = append(l.exceptions, exception{task: task})
+func (l *list) exception(code string, task ErrorHandler) {
+	l.exceptions = append(l.exceptions, exception{code: code, task: task})
 }

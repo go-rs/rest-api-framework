@@ -1,19 +1,17 @@
 package rest
 
-type App struct {
-	list    *list
-	api     *API
-	handler *Handler
-}
+func New(prefix string) *API {
+	var _list = new(list)
 
-func New(prefix string) (*API, *Handler) {
-	var l = &list{}
+	var _handler = &handler{
+		list: _list,
+	}
+
 	var api = &API{
-		prefix: prefix,
-		list:   l,
+		prefix:  trim(prefix),
+		list:    _list,
+		handler: _handler,
 	}
-	var handler = &Handler{
-		list: l,
-	}
-	return api, handler
+
+	return api
 }

@@ -2,24 +2,31 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-rs/rest-api-framework"
 	"net/http"
+
+	"github.com/go-rs/rest-api-framework"
 )
 
 func main() {
-	var api, handler = rest.New("/")
+	var api = rest.New("/")
 
-	api.Get("/", func() {
-		fmt.Println("Hello, World!")
+	api.Use(func(ctx *rest.Context) {
+		fmt.Println("/* middleware")
+	})
+
+	api.Get("/", func(ctx *rest.Context) {
+		ctx.JSON("{\"message\": \"Hello, World!\"}")
 	})
 
 	user := api.Group("/user")
 
-	user.Get("/", func() {
-		fmt.Println("Hello, User!")
+	user.Use(func(context *rest.Context) {
+		fmt.Println("/user/* middleware")
 	})
 
-	_ = http.ListenAndServe(":8080", handler)
+	user.Get("/", func(ctx *rest.Context) {
+		ctx.Raw("Hello, user!")
+	})
 
-	fmt.Println(api)
+	http.ListenAndServe(":8080", api)
 }
