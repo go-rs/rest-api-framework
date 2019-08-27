@@ -25,7 +25,7 @@ type API struct {
 
 func (api *API) Group(prefix string) Group {
 	var group Group = &API{
-		prefix: api.prefix + trim(prefix),
+		prefix: trim(api.prefix + prefix),
 		list:   api.list,
 	}
 	return group

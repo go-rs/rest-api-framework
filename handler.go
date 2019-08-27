@@ -32,6 +32,10 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// STEP 1: middlewares
 	for _, handle := range h.list.middlewares {
+		if ctx.end {
+			return
+		}
+
 		if handle.pattern.test(uri) {
 			handle.task(ctx)
 		}
@@ -39,6 +43,10 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// STEP 2: routes
 	for _, handle := range h.list.routes {
+		if ctx.end {
+			return
+		}
+
 		if r.Method == handle.method && handle.pattern.test(uri) {
 			handle.task(ctx)
 		}
