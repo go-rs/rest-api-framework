@@ -4,8 +4,24 @@ import (
 	"net/http"
 )
 
+type Handler func(Context)
+
+type ErrorHandler func(error, Context)
+
+type API interface {
+	Use(Handler)
+	Group(string) Group
+	Get(string, Handler)
+	Post(string, Handler)
+	Put(string, Handler)
+	Delete(string, Handler)
+	Exception(string, ErrorHandler)
+	ServeHTTP(http.ResponseWriter, *http.Request)
+}
+
 type Group interface {
 	Use(Handler)
+	Group(string) Group
 	Get(string, Handler)
 	Post(string, Handler)
 	Put(string, Handler)
@@ -13,48 +29,44 @@ type Group interface {
 	Exception(string, ErrorHandler)
 }
 
-type Handler func(*Context)
-
-type ErrorHandler func(error, *Context)
-
-type API struct {
+type api struct {
 	prefix  string
 	list    *list
 	handler *handler
 }
 
-func (api *API) Group(prefix string) Group {
-	var group Group = &API{
-		prefix: trim(api.prefix + prefix),
-		list:   api.list,
+func (a *api) Group(prefix string) Group {
+	var group Group = &api{
+		prefix: trim(a.prefix + prefix),
+		list:   a.list,
 	}
 	return group
 }
 
-func (api *API) Use(task Handler) {
-	api.list.middleware(api.prefix, task)
+func (a *api) Use(task Handler) {
+	a.list.middleware(a.prefix, task)
 }
 
-func (api *API) Get(pattern string, task Handler) {
-	api.list.route(http.MethodGet, api.prefix+pattern, task)
+func (a *api) Get(pattern string, task Handler) {
+	a.list.route(http.MethodGet, a.prefix+pattern, task)
 }
 
-func (api *API) Post(pattern string, task Handler) {
-	api.list.route(http.MethodGet, api.prefix+pattern, task)
+func (a *api) Post(pattern string, task Handler) {
+	a.list.route(http.MethodGet, a.prefix+pattern, task)
 }
 
-func (api *API) Put(pattern string, task Handler) {
-	api.list.route(http.MethodGet, api.prefix+pattern, task)
+func (a *api) Put(pattern string, task Handler) {
+	a.list.route(http.MethodGet, a.prefix+pattern, task)
 }
 
-func (api *API) Delete(pattern string, task Handler) {
-	api.list.route(http.MethodGet, api.prefix+pattern, task)
+func (a *api) Delete(pattern string, task Handler) {
+	a.list.route(http.MethodGet, a.prefix+pattern, task)
 }
 
-func (api *API) Exception(code string, task ErrorHandler) {
-	api.list.exception(code, task)
+func (a *api) Exception(code string, task ErrorHandler) {
+	a.list.exception(code, task)
 }
 
-func (api *API) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	api.handler.serveHTTP(w, r)
+func (a *api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	a.handler.serveHTTP(w, r)
 }

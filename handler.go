@@ -10,9 +10,9 @@ type handler struct {
 }
 
 func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
-	var ctx = &Context{
-		Writer:  w,
-		Request: r,
+	var ctx = &context{
+		w: w,
+		r: r,
 	}
 
 	// required "/" to match pattern
@@ -32,8 +32,8 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// STEP 1: middlewares
 	for _, handle := range h.list.middlewares {
-		if ctx.end {
-			return
+		if ctx.end || ctx.err != nil {
+			break
 		}
 
 		if handle.pattern.test(uri) {
@@ -43,12 +43,23 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// STEP 2: routes
 	for _, handle := range h.list.routes {
-		if ctx.end {
-			return
+		if ctx.end || ctx.err != nil {
+			break
 		}
 
 		if r.Method == handle.method && handle.pattern.test(uri) {
 			handle.task(ctx)
+		}
+	}
+
+	// STEP 3: errors
+	for _, handle := range h.list.exceptions {
+		if ctx.end || ctx.err == nil {
+			break
+		}
+
+		if ctx.code == handle.code {
+			handle.task(ctx.err, ctx)
 		}
 	}
 }
