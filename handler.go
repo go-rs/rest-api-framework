@@ -99,7 +99,6 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 			ctx.Throw(ErrCodeNotFound, errors.New("404 page not found"))
 		}
 
-		fmt.Println("this should call...", h.list)
 		// if user has custom unhandled function, then execute it
 		if h.list.uncaughtException != nil {
 			h.list.uncaughtException(ctx.err, ctx)
