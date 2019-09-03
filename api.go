@@ -16,6 +16,7 @@ type API interface {
 	Put(string, Handler)
 	Delete(string, Handler)
 	Exception(string, ErrorHandler)
+	UncaughtException(ErrorHandler)
 	ServeHTTP(http.ResponseWriter, *http.Request)
 }
 
@@ -65,6 +66,10 @@ func (a *api) Delete(pattern string, task Handler) {
 
 func (a *api) Exception(code string, task ErrorHandler) {
 	a.list.exception(code, task)
+}
+
+func (a *api) UncaughtException(task ErrorHandler) {
+	a.list.unhandledException(task)
 }
 
 func (a *api) ServeHTTP(w http.ResponseWriter, r *http.Request) {

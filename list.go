@@ -19,9 +19,10 @@ type exception struct {
 }
 
 type list struct {
-	middlewares []middleware
-	routes      []route
-	exceptions  []exception
+	middlewares       []middleware
+	routes            []route
+	exceptions        []exception
+	uncaughtException ErrorHandler
 }
 
 func (l *list) middleware(str string, task Handler) {
@@ -50,4 +51,8 @@ func (l *list) route(method string, str string, task Handler) {
 
 func (l *list) exception(code string, task ErrorHandler) {
 	l.exceptions = append(l.exceptions, exception{code: code, task: task})
+}
+
+func (l *list) unhandledException(task ErrorHandler) {
+	l.uncaughtException = task
 }
