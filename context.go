@@ -20,13 +20,12 @@ type context struct {
 	r *http.Request
 
 	// for internal purpose
-	params            map[string]string
-	headers           map[string]string
-	end               bool
-	status            int
-	code              string
-	err               error
-	responseProcessed bool
+	params  map[string]string
+	headers map[string]string
+	end     bool
+	status  int
+	code    string
+	err     error
 }
 
 func (ctx *context) init() {
@@ -39,6 +38,10 @@ func (ctx *context) destroy() {
 	ctx.headers = nil
 	ctx.params = nil
 	ctx.err = nil
+}
+
+func (ctx *context) reset() {
+	ctx.headers = make(map[string]string)
 }
 
 func (ctx *context) Request() *http.Request {
@@ -54,8 +57,8 @@ func (ctx *context) Status(status int) Context {
 	return ctx
 }
 
-func (ctx *context) Header(name string, value string) Context {
-	ctx.headers[name] = value
+func (ctx *context) Header(key string, value string) Context {
+	ctx.headers[key] = value
 	return ctx
 }
 
@@ -82,7 +85,10 @@ func (ctx *context) Raw(data interface{}) {
 func (ctx *context) write(body []byte) {
 	var err error
 	ctx.end = true
-	ctx.responseProcessed = true
+
+	for key, value := range ctx.headers {
+		ctx.w.Header().Set(key, value)
+	}
 
 	if ctx.status > 0 {
 		ctx.w.WriteHeader(ctx.status)
@@ -90,28 +96,29 @@ func (ctx *context) write(body []byte) {
 
 	_, err = ctx.w.Write(body)
 	if err != nil {
-		// TODO: handle error
+		log.Printf("write error: %v", err)
 	}
 }
 
-// Unhandled Exception
+// unhandled exception
 func (ctx *context) unhandledException() {
 	defer ctx.recover()
 
-	if ctx.responseProcessed || ctx.end {
+	if ctx.end {
 		return
 	}
 
-	// NOT FOUND handler
-	if ctx.code == ErrCodeNotFound {
-		ctx.Status(http.StatusNotFound)
-	}
-
 	if ctx.err != nil {
+		ctx.reset()
+
 		ctx.Header("Content-Type", "text/plain;charset=UTF-8")
-		if ctx.status < 400 {
+
+		if ctx.code == ErrCodeNotFound {
+			ctx.Status(http.StatusNotFound)
+		} else if ctx.status < 400 {
 			ctx.Status(http.StatusInternalServerError)
 		}
+
 		ctx.write([]byte(ctx.err.Error()))
 	}
 }
@@ -120,9 +127,8 @@ func (ctx *context) unhandledException() {
 func (ctx *context) recover() {
 	err := recover()
 	if err != nil {
-		//TODO: debugger mode
 		log.Printf("runtime error: %v", err)
-		if !ctx.responseProcessed {
+		if !ctx.end {
 			http.Error(ctx.w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 	}

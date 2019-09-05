@@ -23,6 +23,7 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		r: r,
 	}
 
+	// initialize the context and also prepare destroy
 	ctx.init()
 	defer ctx.destroy()
 
@@ -30,18 +31,9 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		err := recover()
 		if err != nil {
-			if !ctx.end {
-				defer h.recover(ctx)
-				ctx.code = ErrCodeRuntimeError
-				ctx.err = fmt.Errorf("%v", err)
-				if h.list.uncaughtException != nil {
-					h.list.uncaughtException(ctx.err, ctx)
-				} else {
-					ctx.unhandledException()
-				}
-			}
-			return
+			ctx.Throw(ErrCodeRuntimeError, fmt.Errorf("%v", err))
 		}
+		h.caughtExceptions(ctx)
 	}()
 
 	// on context done, stop execution
@@ -49,7 +41,7 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		_ctx := r.Context()
 		select {
 		case <-_ctx.Done():
-			//TODO: end context
+			ctx.end = true
 		}
 	}()
 
@@ -61,29 +53,36 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// STEP 1: middlewares
 	for _, handle := range h.list.middlewares {
-		if ctx.end || ctx.err != nil {
+		if ctx.end || ctx.code != "" || ctx.err != nil {
 			break
 		}
 
 		if handle.pattern.test(uri) {
+			ctx.params = handle.pattern.match(uri)
 			handle.task(ctx)
 		}
 	}
 
 	// STEP 2: routes
 	for _, handle := range h.list.routes {
-		if ctx.end || ctx.err != nil {
+		if ctx.end || ctx.code != "" || ctx.err != nil {
 			break
 		}
 
 		if r.Method == handle.method && handle.pattern.test(uri) {
+			ctx.params = handle.pattern.match(uri)
 			handle.task(ctx)
 		}
 	}
 
+	// if no error and still not ended that means its NOT FOUND
+	if !ctx.end && ctx.code == "" && ctx.err == nil {
+		ctx.Throw(ErrCodeNotFound, errors.New("404 page not found"))
+	}
+
 	// STEP 3: errors
 	for _, handle := range h.list.exceptions {
-		if ctx.end || ctx.err == nil {
+		if ctx.end || ctx.code == "" {
 			break
 		}
 
@@ -91,23 +90,16 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 			handle.task(ctx.err, ctx)
 		}
 	}
+}
 
-	// STEP 5: unhandled exceptions
+func (h *handler) caughtExceptions(ctx *context) {
+	defer h.recover(ctx)
 	if !ctx.end {
-		// if no error and still not ended that means it NOT FOUND
-		if ctx.code == "" {
-			ctx.Throw(ErrCodeNotFound, errors.New("404 page not found"))
-		}
-
-		// if user has custom unhandled function, then execute it
 		if h.list.uncaughtException != nil {
 			h.list.uncaughtException(ctx.err, ctx)
+		} else {
+			ctx.unhandledException()
 		}
-	}
-
-	// STEP 6: system handle
-	if !ctx.end {
-		ctx.unhandledException()
 	}
 }
 

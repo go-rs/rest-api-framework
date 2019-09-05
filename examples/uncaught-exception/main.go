@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -12,10 +10,6 @@ import (
 func main() {
 	var api = rest.New("/")
 
-	api.Use(func(ctx rest.Context) {
-		fmt.Println("/* middleware")
-	})
-
 	api.Get("/page/:id", func(ctx rest.Context) {
 		// way to reproduce uncaught exception
 		zero, _ := strconv.ParseInt(ctx.Params()["id"], 10, 32)
@@ -24,10 +18,7 @@ func main() {
 	})
 
 	api.UncaughtException(func(e error, ctx rest.Context) {
-		log.Println("ERROR: ", e.Error())
-		//zero, _ := strconv.ParseInt(ctx.Params()["id"], 10, 32)
-		//_ = 10 / zero
-		ctx.Raw("Uncaught exception is handled by user")
+		ctx.Status(500).Raw("Uncaught exception is handled by user")
 	})
 
 	http.ListenAndServe(":8080", api)

@@ -19,6 +19,8 @@ func main() {
 		ctx.JSON("{\"message\": \"Hello, World!\"}")
 	})
 
+	//==========================Error Handling==================================
+
 	api.Get("/error", func(ctx rest.Context) {
 		ctx.Status(500).Throw("TEST_ERROR", errors.New("custom error"))
 	})
@@ -26,6 +28,8 @@ func main() {
 	api.Exception("TEST_ERROR", func(err error, ctx rest.Context) {
 		ctx.Raw(err.Error())
 	})
+
+	//============================Extended routes====================================
 
 	user := api.Group("/user")
 
