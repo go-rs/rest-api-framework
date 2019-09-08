@@ -12,8 +12,21 @@ type Context interface {
 	Header(string, string) Context
 	Throw(string, error)
 	JSON(interface{})
-	Raw(interface{})
+	XML(interface{})
+	Text(string)
+	Write([]byte)
 }
+
+var (
+	ErrCodeInvalidJSON = "INVALID_JSON"
+	ErrCodeInvalidXML  = "INVALID_XML"
+)
+
+var (
+	headerText = "text/plain"
+	headerJson = "application/json"
+	headerXML  = "text/xml"
+)
 
 type context struct {
 	w http.ResponseWriter
@@ -69,16 +82,33 @@ func (ctx *context) Throw(code string, err error) {
 
 // send JSON
 func (ctx *context) JSON(data interface{}) {
-	// set header
-	// TODO:
-	ctx.write([]byte(data.(string)))
+	body, err := jsonToBytes(data)
+	if err != nil {
+		ctx.Throw(ErrCodeInvalidJSON, err)
+		return
+	}
+	ctx.Header("Content-Type", headerJson)
+	ctx.write(body)
+}
+
+func (ctx *context) XML(data interface{}) {
+	body, err := xmlToBytes(data)
+	if err != nil {
+		ctx.Throw(ErrCodeInvalidXML, err)
+		return
+	}
+	ctx.Header("Content-Type", headerXML)
+	ctx.write(body)
 }
 
 // send Raw
-func (ctx *context) Raw(data interface{}) {
-	// set header
-	// TODO:
-	ctx.write([]byte(data.(string)))
+func (ctx *context) Text(data string) {
+	ctx.Header("Content-Type", headerText)
+	ctx.write([]byte(data))
+}
+
+func (ctx *context) Write(data []byte) {
+	ctx.write(data)
 }
 
 // write bytes in response
@@ -111,7 +141,7 @@ func (ctx *context) unhandledException() {
 	if ctx.err != nil {
 		ctx.reset()
 
-		ctx.Header("Content-Type", "text/plain;charset=UTF-8")
+		ctx.Header("Content-Type", headerText)
 
 		if ctx.code == ErrCodeNotFound {
 			ctx.Status(http.StatusNotFound)

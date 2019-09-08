@@ -13,6 +13,7 @@ func main() {
 
 	api.Use(func(ctx rest.Context) {
 		fmt.Println("/* middleware")
+		ctx.JSON(true)
 	})
 
 	api.Get("/", func(ctx rest.Context) {
@@ -26,19 +27,30 @@ func main() {
 	})
 
 	api.Exception("TEST_ERROR", func(err error, ctx rest.Context) {
-		ctx.Raw(err.Error())
+		ctx.Text(err.Error())
 	})
 
 	//============================Extended routes====================================
 
 	user := api.Group("/user")
 
-	user.Use(func(context rest.Context) {
+	user.Use(func(ctx rest.Context) {
 		fmt.Println("/user/* middleware")
 	})
 
 	user.Get("/", func(ctx rest.Context) {
-		ctx.Raw("Hello, user!")
+		ctx.XML(`
+			<person id="13">
+				  <name>
+					  <first>John</first>
+					  <last>Doe</last>
+				  </name>
+				  <age>42</age>
+				  <Married>false</Married>
+				  <City>Hanga Roa</City>
+				  <State>Easter Island
+			  </person>
+		`)
 	})
 
 	http.ListenAndServe(":8080", api)

@@ -1,6 +1,10 @@
 package rest
 
 import (
+	"encoding/json"
+	"encoding/xml"
+	"errors"
+	"reflect"
 	"regexp"
 	"strings"
 )
@@ -79,4 +83,23 @@ func trim(str string) string {
 		str = str[:len(str)-len(sep)]
 	}
 	return str
+}
+
+func jsonToBytes(data interface{}) ([]byte, error) {
+	_type := reflect.TypeOf(data).String()
+
+	if _type == "int" || _type == "float64" || _type == "bool" {
+		return nil, errors.New("invalid JSON data")
+	}
+
+	if _type == "string" {
+		return json.RawMessage(data.(string)).MarshalJSON()
+	}
+
+	return json.Marshal(data)
+}
+
+func xmlToBytes(data interface{}) ([]byte, error) {
+	//TODO: validation
+	return xml.Marshal(data)
 }
