@@ -87,7 +87,7 @@ func (ctx *context) JSON(data interface{}) {
 		ctx.Throw(ErrCodeInvalidJSON, err)
 		return
 	}
-	ctx.Header("Content-Type", headerJson)
+	ctx.Header("Content-Type", headerJSON)
 	ctx.write(body)
 }
 
