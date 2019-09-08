@@ -11,7 +11,10 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-# editors
+# Editors
 .idea
 .DS_Store
 .vscode
+
+# Dependency directories
+vendor/

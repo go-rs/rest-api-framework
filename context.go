@@ -1,248 +1,165 @@
-// go-rs/rest-api-framework
-// Copyright(c) 2019 Roshan Gade. All rights reserved.
-// MIT Licensed
-
 package rest
 
 import (
-	"fmt"
 	"log"
 	"net/http"
-	"net/url"
-
-	"github.com/go-rs/rest-api-framework/render"
 )
 
-// Task, which is used to perform a specific job,
-// just before request completion or after request completion
-type Task func()
-
-// Context, which initializes at every request with pre-declared variables
-// such as Request, Response, Query, Body, Params etc.
-type Context struct {
-	// available to users
-	Request  *http.Request
-	Response http.ResponseWriter
-	Query    url.Values
-	Body     map[string]interface{}
-	Params   map[string]string
-
-	// for internal use
-	headers         map[string]string
-	data            map[string]interface{}
-	code            string
-	err             error
-	status          int
-	end             bool
-	requestSent     bool
-	preTasksCalled  bool
-	postTasksCalled bool
-	preSendTasks    []Task
-	postSendTasks   []Task
+type Context interface {
+	Request() *http.Request
+	Params() map[string]string
+	Status(int) Context
+	Header(string, string) Context
+	Throw(string, error)
+	JSON(interface{})
+	XML(interface{})
+	Text(string)
+	Write([]byte)
 }
 
-// Initialization of context data on every request
-func (ctx *Context) init() {
+var (
+	ErrCodeInvalidJSON = "INVALID_JSON"
+	ErrCodeInvalidXML  = "INVALID_XML"
+)
+
+var (
+	headerText = "text/plain"
+	headerJson = "application/json"
+	headerXML  = "text/xml"
+)
+
+type context struct {
+	w http.ResponseWriter
+	r *http.Request
+
+	// for internal purpose
+	params  map[string]string
+	headers map[string]string
+	end     bool
+	status  int
+	code    string
+	err     error
+}
+
+func (ctx *context) init() {
 	ctx.headers = make(map[string]string)
-	ctx.data = make(map[string]interface{})
-	ctx.preSendTasks = make([]Task, 0)
-	ctx.postSendTasks = make([]Task, 0)
-	ctx.status = 200
 }
 
-// Destroy context data once request end
-func (ctx *Context) destroy() {
-	ctx.Request = nil
-	ctx.Response = nil
-	ctx.Query = nil
-	ctx.Body = nil
-	ctx.Params = nil
+func (ctx *context) destroy() {
+	ctx.w = nil
+	ctx.r = nil
 	ctx.headers = nil
-	ctx.data = nil
-	ctx.code = ""
+	ctx.params = nil
 	ctx.err = nil
-	ctx.status = 0
-	ctx.end = false
-	ctx.requestSent = false
-	ctx.preTasksCalled = false
-	ctx.postTasksCalled = false
-	ctx.preSendTasks = nil
-	ctx.postSendTasks = nil
 }
 
-// Set data
-func (ctx *Context) Set(key string, val interface{}) {
-	ctx.data[key] = val
+func (ctx *context) reset() {
+	ctx.headers = make(map[string]string)
 }
 
-// Get data
-func (ctx *Context) Get(key string) (val interface{}, exists bool) {
-	val, exists = ctx.data[key]
-	return
+func (ctx *context) Request() *http.Request {
+	return ctx.r
 }
 
-// Delete data
-func (ctx *Context) Delete(key string) {
-	delete(ctx.data, key)
+func (ctx *context) Params() map[string]string {
+	return ctx.params
 }
 
-// Set response status
-func (ctx *Context) Status(code int) *Context {
-	ctx.status = code
+func (ctx *context) Status(status int) Context {
+	ctx.status = status
 	return ctx
 }
 
-// Set response header
-func (ctx *Context) SetHeader(key string, val string) *Context {
-	ctx.headers[key] = val
+func (ctx *context) Header(key string, value string) Context {
+	ctx.headers[key] = value
 	return ctx
 }
 
-// Caught error in context on throw
-func (ctx *Context) Throw(code string) {
-	ctx.code = code
-}
-
-// Throw an error with error
-func (ctx *Context) ThrowWithError(code string, err error) {
+func (ctx *context) Throw(code string, err error) {
 	ctx.code = code
 	ctx.err = err
 }
 
-// Get error if any
-func (ctx *Context) GetError() error {
-	return ctx.err
-}
-
-// Marked the request is ended
-func (ctx *Context) End() {
-	ctx.end = true
-}
-
-// Send response in bytes
-func (ctx *Context) Write(data []byte) {
-	ctx.send(data, nil)
-}
-
-// Send JSON data in response
-func (ctx *Context) JSON(data interface{}) {
-	json := render.JSON{
-		Body: data,
-	}
-	body, err := json.ToBytes(ctx.Response)
-	ctx.send(body, err)
-}
-
-// Send text in response
-func (ctx *Context) Text(data string) {
-	txt := render.Text{
-		Body: data,
-	}
-	body, err := txt.ToBytes(ctx.Response)
-	ctx.send(body, err)
-}
-
-// Register pre-send hook
-func (ctx *Context) PreSend(task Task) {
-	ctx.preSendTasks = append(ctx.preSendTasks, task)
-}
-
-// Register pre-post hook
-func (ctx *Context) PostSend(task Task) {
-	ctx.postSendTasks = append(ctx.postSendTasks, task)
-}
-
-//////////////////////////////////////////////////
-func (ctx *Context) shouldBreak() (flag bool) {
-	return ctx.end || ctx.code != ""
-}
-
-// Send data, which uses bytes or error if any
-// Also, it calls pre-send and post-send registered hooks
-func (ctx *Context) send(data []byte, err error) {
-
-	if ctx.end {
-		return
-	}
-
+// send JSON
+func (ctx *context) JSON(data interface{}) {
+	body, err := jsonToBytes(data)
 	if err != nil {
-		ctx.code = "INVALID_RESPONSE"
-		ctx.err = err
-		ctx.unhandledException()
+		ctx.Throw(ErrCodeInvalidJSON, err)
 		return
 	}
-
-	// execute pre-send hooks
-	if !ctx.preTasksCalled {
-		ctx.preTasksCalled = true
-		for _, task := range ctx.preSendTasks {
-			task()
-		}
-	}
-
-	// write data
-	if !ctx.requestSent {
-		ctx.requestSent = true
-
-		for key, val := range ctx.headers {
-			ctx.Response.Header().Set(key, val)
-		}
-
-		ctx.Response.WriteHeader(ctx.status)
-
-		_, err = ctx.Response.Write(data)
-
-		if err != nil {
-			//TODO: debugger mode
-			log.Printf("response error: %v", err)
-		}
-	}
-
-	// execute post-send hooks
-	if !ctx.postTasksCalled {
-		ctx.postTasksCalled = true
-		for _, task := range ctx.postSendTasks {
-			task()
-		}
-	}
-
-	ctx.End()
+	ctx.Header("Content-Type", headerJson)
+	ctx.write(body)
 }
 
-// Unhandled Exception
-func (ctx *Context) unhandledException() {
+func (ctx *context) XML(data interface{}) {
+	body, err := xmlToBytes(data)
+	if err != nil {
+		ctx.Throw(ErrCodeInvalidXML, err)
+		return
+	}
+	ctx.Header("Content-Type", headerXML)
+	ctx.write(body)
+}
+
+// send Raw
+func (ctx *context) Text(data string) {
+	ctx.Header("Content-Type", headerText)
+	ctx.write([]byte(data))
+}
+
+func (ctx *context) Write(data []byte) {
+	ctx.write(data)
+}
+
+// write bytes in response
+func (ctx *context) write(body []byte) {
+	var err error
+	ctx.end = true
+
+	for key, value := range ctx.headers {
+		ctx.w.Header().Set(key, value)
+	}
+
+	if ctx.status > 0 {
+		ctx.w.WriteHeader(ctx.status)
+	}
+
+	_, err = ctx.w.Write(body)
+	if err != nil {
+		log.Printf("write error: %v", err)
+	}
+}
+
+// unhandled exception
+func (ctx *context) unhandledException() {
 	defer ctx.recover()
 
 	if ctx.end {
 		return
 	}
 
-	// NOT FOUND handler
-	if ctx.code == ErrCodeNotFound {
-		ctx.Status(http.StatusNotFound)
-	}
+	if ctx.err != nil {
+		ctx.reset()
 
-	if ctx.code != "" || ctx.err != nil {
-		msg := fmt.Sprintf("error code: %v", ctx.code)
-		if ctx.err != nil {
-			msg += fmt.Sprintf("\nerror message: %v", ctx.err)
-		}
-		ctx.SetHeader("Content-Type", "text/plain;charset=UTF-8")
-		if ctx.status < 400 {
+		ctx.Header("Content-Type", headerText)
+
+		if ctx.code == ErrCodeNotFound {
+			ctx.Status(http.StatusNotFound)
+		} else if ctx.status < 400 {
 			ctx.Status(http.StatusInternalServerError)
 		}
-		ctx.Write([]byte(msg))
+
+		ctx.write([]byte(ctx.err.Error()))
 	}
 }
 
 // recover
-func (ctx *Context) recover() {
+func (ctx *context) recover() {
 	err := recover()
 	if err != nil {
-		//TODO: debugger mode
 		log.Printf("runtime error: %v", err)
-		if !ctx.requestSent {
-			http.Error(ctx.Response, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		if !ctx.end {
+			http.Error(ctx.w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 	}
 }
