@@ -24,7 +24,7 @@ var (
 
 var (
 	headerText = "text/plain"
-	headerJson = "application/json"
+	headerJSON = "application/json"
 	headerXML  = "text/xml"
 )
 
