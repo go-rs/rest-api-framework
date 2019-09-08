@@ -1,9 +1,11 @@
+// go-rs/rest-api-framework
+// Copyright(c) 2019 Roshan Gade. All rights reserved.
+// MIT Licensed
 package rest
 
 import (
 	"encoding/json"
 	"encoding/xml"
-	"errors"
 	"reflect"
 	"regexp"
 	"strings"
@@ -88,14 +90,11 @@ func trim(str string) string {
 func jsonToBytes(data interface{}) ([]byte, error) {
 	_type := reflect.TypeOf(data).String()
 
-	if _type == "int" || _type == "float64" || _type == "bool" {
-		return nil, errors.New("invalid JSON data")
-	}
-
 	if _type == "string" {
 		return json.RawMessage(data.(string)).MarshalJSON()
 	}
 
+	//standard JSON as per RFC 7159
 	return json.Marshal(data)
 }
 

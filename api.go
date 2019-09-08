@@ -1,3 +1,6 @@
+// go-rs/rest-api-framework
+// Copyright(c) 2019 Roshan Gade. All rights reserved.
+// MIT Licensed
 package rest
 
 import (
@@ -53,15 +56,15 @@ func (a *api) Get(pattern string, task Handler) {
 }
 
 func (a *api) Post(pattern string, task Handler) {
-	a.list.route(http.MethodGet, a.prefix+pattern, task)
+	a.list.route(http.MethodPost, a.prefix+pattern, task)
 }
 
 func (a *api) Put(pattern string, task Handler) {
-	a.list.route(http.MethodGet, a.prefix+pattern, task)
+	a.list.route(http.MethodPut, a.prefix+pattern, task)
 }
 
 func (a *api) Delete(pattern string, task Handler) {
-	a.list.route(http.MethodGet, a.prefix+pattern, task)
+	a.list.route(http.MethodDelete, a.prefix+pattern, task)
 }
 
 func (a *api) Exception(code string, task ErrorHandler) {

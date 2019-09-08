@@ -1,3 +1,6 @@
+// go-rs/rest-api-framework
+// Copyright(c) 2019 Roshan Gade. All rights reserved.
+// MIT Licensed
 package rest
 
 func New(prefix string) API {
