@@ -8,6 +8,6 @@
 
 [![GitHub version](https://badge.fury.io/gh/go-rs%2Frest-api-framework.svg)](https://badge.fury.io/gh/go-rs%2Frest-api-framework)
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/go-rs/rest-api-framework)](https://goreportcard.com/report/go-rs/rest-api-framework)
+[![Go Report Card](https://goreportcard.com/badge/github.com/go-rs/rest-api-framework)](https://goreportcard.com/report/github.com/go-rs/rest-api-framework)
 
 [![GoDoc](https://godoc.org/github.com/go-rs/rest-api-framework?status.svg)](https://godoc.org/github.com/go-rs/rest-api-framework)
