@@ -48,7 +48,7 @@ func main() {
 				  <age>42</age>
 				  <Married>false</Married>
 				  <City>Hanga Roa</City>
-				  <State>Easter Island
+				  <State>Easter Island</State>
 			  </person>
 		`)
 	})
