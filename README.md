@@ -13,3 +13,4 @@
 [![GoDoc](https://godoc.org/github.com/go-rs/rest-api-framework?status.svg)](https://godoc.org/github.com/go-rs/rest-api-framework)
 
 [![Known Vulnerabilities](https://snyk.io//test/github/go-rs/rest-api-framework/badge.svg?targetFile=Gopkg.lock)](https://snyk.io//test/github/go-rs/rest-api-framework?targetFile=Gopkg.lock)
+
