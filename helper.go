@@ -100,5 +100,10 @@ func jsonToBytes(data interface{}) ([]byte, error) {
 
 func xmlToBytes(data interface{}) ([]byte, error) {
 	//TODO: validation
+	_type := reflect.TypeOf(data).String()
+
+	if _type == "string" {
+		return []byte(data.(string)), nil
+	}
 	return xml.Marshal(data)
 }
