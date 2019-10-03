@@ -1,4 +1,4 @@
-#REST API Framework
+# REST API Framework
 
 [![wercker status](https://app.wercker.com/status/2cfea05e0fbd746e2d2ccfade96478c9/s/master "wercker status")](https://app.wercker.com/project/byKey/2cfea05e0fbd746e2d2ccfade96478c9)
 
@@ -16,5 +16,5 @@
 
 [![Known Vulnerabilities](https://snyk.io//test/github/go-rs/rest-api-framework/badge.svg?targetFile=Gopkg.lock)](https://snyk.io//test/github/go-rs/rest-api-framework?targetFile=Gopkg.lock)
 
-##Status
+## Status
 Development is in progress.
