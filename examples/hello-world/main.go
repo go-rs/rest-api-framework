@@ -13,7 +13,6 @@ func main() {
 
 	api.Use(func(ctx rest.Context) {
 		fmt.Println("/* middleware")
-		ctx.JSON(true)
 	})
 
 	api.Get("/", func(ctx rest.Context) {
