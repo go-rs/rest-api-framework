@@ -1,5 +1,5 @@
 // go-rs/rest-api-framework
-// Copyright(c) 2019 Roshan Gade. All rights reserved.
+// Copyright(c) 2019-2020 Roshan Gade. All rights reserved.
 // MIT Licensed
 package rest
 
@@ -13,68 +13,68 @@ type ErrorHandler func(error, Context)
 
 type API interface {
 	Use(Handler)
-	Group(string) Group
+	Router(string) Router
 	Get(string, Handler)
 	Post(string, Handler)
 	Put(string, Handler)
 	Delete(string, Handler)
-	Exception(string, ErrorHandler)
-	UncaughtException(ErrorHandler)
+	OnError(string, ErrorHandler)
+	OnUncaughtException(ErrorHandler)
 	ServeHTTP(http.ResponseWriter, *http.Request)
 }
 
-type Group interface {
+type Router interface {
 	Use(Handler)
-	Group(string) Group
+	Router(string) Router
 	Get(string, Handler)
 	Post(string, Handler)
 	Put(string, Handler)
 	Delete(string, Handler)
-	Exception(string, ErrorHandler)
+	OnError(string, ErrorHandler)
 }
 
 type api struct {
-	prefix  string
-	list    *list
-	handler *handler
+	prefix         string
+	router         *router
+	requestHandler *requestHandler
 }
 
-func (a *api) Group(prefix string) Group {
-	var group Group = &api{
+func (a *api) Router(prefix string) Router {
+	var router Router = &api{
 		prefix: trim(a.prefix + prefix),
-		list:   a.list,
+		router: a.router,
 	}
-	return group
+	return router
 }
 
 func (a *api) Use(task Handler) {
-	a.list.middleware(a.prefix, task)
+	a.router.middleware(a.prefix, task)
 }
 
 func (a *api) Get(pattern string, task Handler) {
-	a.list.route(http.MethodGet, a.prefix+pattern, task)
+	a.router.route(http.MethodGet, a.prefix+pattern, task)
 }
 
 func (a *api) Post(pattern string, task Handler) {
-	a.list.route(http.MethodPost, a.prefix+pattern, task)
+	a.router.route(http.MethodPost, a.prefix+pattern, task)
 }
 
 func (a *api) Put(pattern string, task Handler) {
-	a.list.route(http.MethodPut, a.prefix+pattern, task)
+	a.router.route(http.MethodPut, a.prefix+pattern, task)
 }
 
 func (a *api) Delete(pattern string, task Handler) {
-	a.list.route(http.MethodDelete, a.prefix+pattern, task)
+	a.router.route(http.MethodDelete, a.prefix+pattern, task)
 }
 
-func (a *api) Exception(code string, task ErrorHandler) {
-	a.list.exception(code, task)
+func (a *api) OnError(code string, task ErrorHandler) {
+	a.router.exception(code, task)
 }
 
-func (a *api) UncaughtException(task ErrorHandler) {
-	a.list.unhandledException(task)
+func (a *api) OnUncaughtException(task ErrorHandler) {
+	a.router.unhandledException(task)
 }
 
 func (a *api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	a.handler.serveHTTP(w, r)
+	a.requestHandler.serveHTTP(w, r)
 }

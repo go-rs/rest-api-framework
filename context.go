@@ -1,5 +1,5 @@
 // go-rs/rest-api-framework
-// Copyright(c) 2019 Roshan Gade. All rights reserved.
+// Copyright(c) 2019-2020 Roshan Gade. All rights reserved.
 // MIT Licensed
 package rest
 
@@ -18,6 +18,7 @@ type Context interface {
 	XML(interface{})
 	Text(string)
 	Write([]byte)
+	End()
 }
 
 var (
@@ -110,12 +111,23 @@ func (ctx *context) Text(data string) {
 	ctx.write([]byte(data))
 }
 
+// send blank
+func (ctx *context) End() {
+	ctx.write(nil)
+}
+
 func (ctx *context) Write(data []byte) {
 	ctx.write(data)
 }
 
 // write bytes in response
 func (ctx *context) write(body []byte) {
+
+	if ctx.end {
+		log.Printf("http/request: trying to write response data on already ended request.")
+		return
+	}
+
 	var err error
 	ctx.end = true
 
@@ -129,7 +141,7 @@ func (ctx *context) write(body []byte) {
 
 	_, err = ctx.w.Write(body)
 	if err != nil {
-		log.Printf("write error: %v", err)
+		log.Printf("http/request: write error - %v", err)
 	}
 }
 
@@ -160,7 +172,7 @@ func (ctx *context) unhandledException() {
 func (ctx *context) recover() {
 	err := recover()
 	if err != nil {
-		log.Printf("runtime error: %v", err)
+		log.Printf("http/request: runtime error - %v", err)
 		if !ctx.end {
 			http.Error(ctx.w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}

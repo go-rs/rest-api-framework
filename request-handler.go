@@ -1,5 +1,5 @@
 // go-rs/rest-api-framework
-// Copyright(c) 2019 Roshan Gade. All rights reserved.
+// Copyright(c) 2019-2020 Roshan Gade. All rights reserved.
 // MIT Licensed
 package rest
 
@@ -10,8 +10,8 @@ import (
 	"strings"
 )
 
-type handler struct {
-	list *list
+type requestHandler struct {
+	router *router
 }
 
 // error variables to handle expected errors
@@ -20,7 +20,7 @@ var (
 	ErrCodeRuntimeError = "RUNTIME_ERROR"
 )
 
-func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *requestHandler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	var ctx = &context{
 		w: w,
 		r: r,
@@ -55,7 +55,7 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// STEP 1: middlewares
-	for _, handle := range h.list.middlewares {
+	for _, handle := range h.router.middlewares {
 		if ctx.end || ctx.code != "" || ctx.err != nil {
 			break
 		}
@@ -67,7 +67,7 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// STEP 2: routes
-	for _, handle := range h.list.routes {
+	for _, handle := range h.router.routes {
 		if ctx.end || ctx.code != "" || ctx.err != nil {
 			break
 		}
@@ -80,11 +80,11 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// if no error and still not ended that means its NOT FOUND
 	if !ctx.end && ctx.code == "" && ctx.err == nil {
-		ctx.Throw(ErrCodeNotFound, errors.New("404 page not found"))
+		ctx.Throw(ErrCodeNotFound, errors.New("URL not found"))
 	}
 
 	// STEP 3: errors
-	for _, handle := range h.list.exceptions {
+	for _, handle := range h.router.exceptions {
 		if ctx.end || ctx.code == "" {
 			break
 		}
@@ -95,18 +95,18 @@ func (h *handler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *handler) caughtExceptions(ctx *context) {
+func (h *requestHandler) caughtExceptions(ctx *context) {
 	defer h.recover(ctx)
 	if !ctx.end {
-		if h.list.uncaughtException != nil {
-			h.list.uncaughtException(ctx.err, ctx)
+		if h.router.uncaughtException != nil {
+			h.router.uncaughtException(ctx.err, ctx)
 		} else {
 			ctx.unhandledException()
 		}
 	}
 }
 
-func (h *handler) recover(ctx *context) {
+func (h *requestHandler) recover(ctx *context) {
 	err := recover()
 	if err != nil {
 		ctx.unhandledException()

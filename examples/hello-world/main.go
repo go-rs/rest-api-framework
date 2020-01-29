@@ -11,32 +11,26 @@ import (
 func main() {
 	var api = rest.New("/")
 
+	// global request middleware
 	api.Use(func(ctx rest.Context) {
 		fmt.Println("/* middleware")
 	})
 
+	// curl -X GET 'localhost:8080'
 	api.Get("/", func(ctx rest.Context) {
-		ctx.JSON("{\"message\": \"Hello, World!\"}")
-	})
-
-	//==========================Error Handling==================================
-
-	api.Get("/error", func(ctx rest.Context) {
-		ctx.Status(500).Throw("TEST_ERROR", errors.New("custom error"))
-	})
-
-	api.Exception("TEST_ERROR", func(err error, ctx rest.Context) {
-		ctx.Text(err.Error())
+		ctx.Status(200).JSON("{\"message\": \"Hello, World!\"}")
 	})
 
 	//============================Extended routes====================================
 
-	user := api.Group("/user")
+	user := api.Router("/user")
 
+	// All /user/* request middleware
 	user.Use(func(ctx rest.Context) {
 		fmt.Println("/user/* middleware")
 	})
 
+	// curl -X GET 'localhost:8080/user'
 	user.Get("/", func(ctx rest.Context) {
 		ctx.XML(`
 			<person id="13">
@@ -50,6 +44,29 @@ func main() {
 				  <State>Easter Island</State>
 			  </person>
 		`)
+	})
+
+	// User session
+	session := user.Router("/session")
+
+	// 	curl -X POST 'localhost:8080/user/session'
+	session.Post("/", func(ctx rest.Context) {
+		ctx.Text("Login successful")
+	})
+
+	// 	curl -X DELETE 'localhost:8080/user/session'
+	session.Delete("/", func(ctx rest.Context) {
+		ctx.Status(204).End()
+	})
+
+	//==========================Error Handling==================================
+
+	api.Get("/test", func(ctx rest.Context) {
+		ctx.Throw("CUSTOM_ERROR", errors.New("custom error"))
+	})
+
+	api.OnError("CUSTOM_ERROR", func(err error, ctx rest.Context) {
+		ctx.Status(412).Text("Encountered an error: " + err.Error())
 	})
 
 	http.ListenAndServe(":8080", api)

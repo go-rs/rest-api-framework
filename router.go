@@ -1,5 +1,5 @@
 // go-rs/rest-api-framework
-// Copyright(c) 2019 Roshan Gade. All rights reserved.
+// Copyright(c) 2019-2020 Roshan Gade. All rights reserved.
 // MIT Licensed
 package rest
 
@@ -21,41 +21,41 @@ type exception struct {
 	task ErrorHandler
 }
 
-type list struct {
+type router struct {
 	middlewares       []middleware
 	routes            []route
 	exceptions        []exception
 	uncaughtException ErrorHandler
 }
 
-func (l *list) middleware(str string, task Handler) {
+func (r *router) middleware(str string, task Handler) {
 	p := &pattern{
 		value: trim(str) + "/*",
 	}
 	if err := p.compile(); err != nil {
 		log.Fatalf("Failed to compile `%s` due to %v", p.value, err)
 	}
-	l.middlewares = append(l.middlewares, middleware{pattern: p, task: task})
+	r.middlewares = append(r.middlewares, middleware{pattern: p, task: task})
 }
 
-func (l *list) route(method string, str string, task Handler) {
+func (r *router) route(method string, str string, task Handler) {
 	p := &pattern{
 		value: trim(str),
 	}
 	if err := p.compile(); err != nil {
 		log.Fatalf("Failed to compile `%s` due to %v", p.value, err)
 	}
-	l.routes = append(l.routes, route{
+	r.routes = append(r.routes, route{
 		method:  method,
 		pattern: p,
 		task:    task,
 	})
 }
 
-func (l *list) exception(code string, task ErrorHandler) {
-	l.exceptions = append(l.exceptions, exception{code: code, task: task})
+func (r *router) exception(code string, task ErrorHandler) {
+	r.exceptions = append(r.exceptions, exception{code: code, task: task})
 }
 
-func (l *list) unhandledException(task ErrorHandler) {
-	l.uncaughtException = task
+func (r *router) unhandledException(task ErrorHandler) {
+	r.uncaughtException = task
 }

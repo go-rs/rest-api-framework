@@ -1,19 +1,19 @@
 // go-rs/rest-api-framework
-// Copyright(c) 2019 Roshan Gade. All rights reserved.
+// Copyright(c) 2019-2020 Roshan Gade. All rights reserved.
 // MIT Licensed
 package rest
 
 func New(prefix string) API {
-	var _list = new(list)
+	var _router = new(router)
 
-	var _handler = &handler{
-		list: _list,
+	var _requestHandler = &requestHandler{
+		router: _router,
 	}
 
 	var api = &api{
-		prefix:  trim(prefix),
-		list:    _list,
-		handler: _handler,
+		prefix:         trim(prefix),
+		router:         _router,
+		requestHandler: _requestHandler,
 	}
 
 	return api

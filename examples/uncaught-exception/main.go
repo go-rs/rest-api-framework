@@ -17,7 +17,7 @@ func main() {
 		ctx.Text("This will never respond, if value is zero - " + string(x))
 	})
 
-	api.UncaughtException(func(e error, ctx rest.Context) {
+	api.OnUncaughtException(func(e error, ctx rest.Context) {
 		ctx.Status(500).Text("Uncaught exception is handled by user")
 	})
 
