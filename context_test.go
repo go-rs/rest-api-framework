@@ -82,7 +82,7 @@ func TestContext_Header(t *testing.T) {
 }
 
 func TestContext_Throw(t *testing.T) {
-	ctx.Status(504).Throw("TIMEOUT", errors.New("request timeout"))
+	ctx.Status(504).Throw("TIMEOUT", errors.New("request timeout"), map[string]any{})
 
 	if ctx.code != "TIMEOUT" || !reflect.DeepEqual(ctx.err, errors.New("request timeout")) {
 		t.Error("context.Throw(string, error) should throw an error with error code")
@@ -192,7 +192,7 @@ func TestContext_unhandledException404(t *testing.T) {
 	ctx.init()
 	defer ctx.destroy()
 
-	ctx.Throw(ErrCodeNotFound, errors.New(msg))
+	ctx.Throw(ErrCodeNotFound, errors.New(msg), map[string]any{})
 
 	ctx.unhandledException()
 
@@ -214,7 +214,7 @@ func TestContext_unhandledException500(t *testing.T) {
 	ctx.init()
 	defer ctx.destroy()
 
-	ctx.Throw(ErrCodeRuntimeError, errors.New(msg))
+	ctx.Throw(ErrCodeRuntimeError, errors.New(msg), make(map[string]any))
 
 	ctx.unhandledException()
 

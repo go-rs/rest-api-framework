@@ -6,7 +6,7 @@ package rest
 import (
 	"encoding/json"
 	"encoding/xml"
-	"reflect"
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -28,6 +28,9 @@ func (p *pattern) compile() error {
 	for _, val := range strings.Split(p.value, "/") {
 		if val != "" {
 			switch val[0] {
+			case 94:
+				pattern += "(?:/(.*))"
+
 			case 42:
 				pattern += "(?:/(.*))"
 				p.keys = append(p.keys, "*")
@@ -67,31 +70,27 @@ func (p *pattern) match(url string) map[string]string {
 	params := make(map[string]string)
 	matches := p.regexp.FindAllSubmatch([]byte(url), -1)
 
-	for _, val := range matches {
-		for i, k := range val[1:] {
-			params[p.keys[i]] = string(k)
-			if p.keys[i] == "*" {
-				params["*"] = sep + params["*"]
-			}
+	for i, k := range matches[0][1:] {
+		params[p.keys[i]] = string(k)
+		if p.keys[i] == "*" {
+			params["*"] = sep + params["*"]
 		}
 	}
-
+	fmt.Println(params)
 	return params
 }
 
 // trim "/" from suffix
 func trim(str string) string {
 	if strings.HasSuffix(str, sep) {
-		str = str[:len(str)-len(sep)]
+		str = str[:len(str)-1]
 	}
 	return str
 }
 
-func jsonToBytes(data interface{}) ([]byte, error) {
-	_type := reflect.TypeOf(data).String()
-
-	if _type == "string" {
-		return json.RawMessage(data.(string)).MarshalJSON()
+func jsonToBytes(data any) ([]byte, error) {
+	if body, isString := data.(string); isString {
+		return json.RawMessage(body).MarshalJSON()
 	}
 
 	//standard JSON as per RFC 7159
@@ -99,11 +98,8 @@ func jsonToBytes(data interface{}) ([]byte, error) {
 }
 
 func xmlToBytes(data interface{}) ([]byte, error) {
-	//TODO: validation
-	_type := reflect.TypeOf(data).String()
-
-	if _type == "string" {
-		return []byte(data.(string)), nil
+	if body, isString := data.(string); isString {
+		return []byte(body), nil
 	}
 	return xml.Marshal(data)
 }

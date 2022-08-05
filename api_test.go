@@ -95,7 +95,7 @@ func TestApi_Group(t *testing.T) {
 }
 
 func TestApi_Exception(t *testing.T) {
-	_api.OnError(ErrCodeNotFound, errTask)
+	_api.CatchError(ErrCodeNotFound, errTask)
 
 	if !(len(_router.middlewares) == 1 && len(_router.routes) == 4 && len(_router.exceptions) == 1 && _router.uncaughtException == nil) {
 		t.Error("api.Exception should add exception handler in the router")
@@ -107,7 +107,7 @@ func TestApi_Exception(t *testing.T) {
 }
 
 func TestApi_UncaughtException(t *testing.T) {
-	_api.OnUncaughtException(errTask)
+	_api.UncaughtException(errTask)
 
 	if !(len(_router.middlewares) == 1 && len(_router.routes) == 4 && len(_router.exceptions) == 1 && _router.uncaughtException != nil) {
 		t.Error("api.OnUncaughtException should add uncaught exception handler in the router")

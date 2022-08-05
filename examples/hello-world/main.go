@@ -62,11 +62,12 @@ func main() {
 	//==========================Error Handling==================================
 
 	api.Get("/test", func(ctx rest.Context) {
-		ctx.Throw("CUSTOM_ERROR", errors.New("custom error"))
+		ctx.Throw("CUSTOM_ERROR", errors.New("custom error"), map[string]any{"a": "b", "c": 1})
 	})
 
-	api.OnError("CUSTOM_ERROR", func(err error, ctx rest.Context) {
-		ctx.Status(412).Text("Encountered an error: " + err.Error())
+	api.CatchError("CUSTOM_ERROR", func(err error, ctx rest.Context) {
+		//ctx.Status(412).JSON("{\"a\": 1}")
+		ctx.Status(412).JSON(ctx.Metadata())
 	})
 
 	http.ListenAndServe(":8080", api)

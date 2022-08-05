@@ -34,7 +34,7 @@ func (h *requestHandler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		err := recover()
 		if err != nil {
-			ctx.Throw(ErrCodeRuntimeError, fmt.Errorf("%v", err))
+			ctx.Throw(ErrCodeRuntimeError, fmt.Errorf("%v", err), make(map[string]any))
 		}
 		h.caughtExceptions(ctx)
 	}()
@@ -80,7 +80,7 @@ func (h *requestHandler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// if no error and still not ended that means its NOT FOUND
 	if !ctx.end && ctx.code == "" && ctx.err == nil {
-		ctx.Throw(ErrCodeNotFound, errors.New("URL not found"))
+		ctx.Throw(ErrCodeNotFound, errors.New("URL not found"), make(map[string]any))
 	}
 
 	// STEP 3: errors

@@ -18,8 +18,8 @@ type API interface {
 	Post(string, Handler)
 	Put(string, Handler)
 	Delete(string, Handler)
-	OnError(string, ErrorHandler)
-	OnUncaughtException(ErrorHandler)
+	CatchError(string, ErrorHandler)
+	UncaughtException(ErrorHandler)
 	ServeHTTP(http.ResponseWriter, *http.Request)
 }
 
@@ -30,7 +30,7 @@ type Router interface {
 	Post(string, Handler)
 	Put(string, Handler)
 	Delete(string, Handler)
-	OnError(string, ErrorHandler)
+	CatchError(string, ErrorHandler)
 }
 
 type api struct {
@@ -67,11 +67,11 @@ func (a *api) Delete(pattern string, task Handler) {
 	a.router.route(http.MethodDelete, a.prefix+pattern, task)
 }
 
-func (a *api) OnError(code string, task ErrorHandler) {
+func (a *api) CatchError(code string, task ErrorHandler) {
 	a.router.exception(code, task)
 }
 
-func (a *api) OnUncaughtException(task ErrorHandler) {
+func (a *api) UncaughtException(task ErrorHandler) {
 	a.router.unhandledException(task)
 }
 

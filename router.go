@@ -30,7 +30,7 @@ type router struct {
 
 func (r *router) middleware(str string, task Handler) {
 	p := &pattern{
-		value: trim(str) + "/*",
+		value: trim(str) + "/^",
 	}
 	if err := p.compile(); err != nil {
 		log.Fatalf("Failed to compile `%s` due to %v", p.value, err)

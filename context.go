@@ -13,7 +13,8 @@ type Context interface {
 	Params() map[string]string
 	Status(int) Context
 	Header(string, string) Context
-	Throw(string, error)
+	Metadata() map[string]any
+	Throw(string, error, map[string]any)
 	JSON(interface{})
 	XML(interface{})
 	Text(string)
@@ -43,6 +44,7 @@ type context struct {
 	status  int
 	code    string
 	err     error
+	options map[string]any
 }
 
 func (ctx *context) init() {
@@ -79,16 +81,21 @@ func (ctx *context) Header(key string, value string) Context {
 	return ctx
 }
 
-func (ctx *context) Throw(code string, err error) {
+func (ctx *context) Metadata() map[string]any {
+	return ctx.options
+}
+
+func (ctx *context) Throw(code string, err error, options map[string]any) {
 	ctx.code = code
 	ctx.err = err
+	ctx.options = options
 }
 
 // send JSON
-func (ctx *context) JSON(data interface{}) {
+func (ctx *context) JSON(data any) {
 	body, err := jsonToBytes(data)
 	if err != nil {
-		ctx.Throw(ErrCodeInvalidJSON, err)
+		ctx.Throw(ErrCodeInvalidJSON, err, make(map[string]any))
 		return
 	}
 	ctx.Header("Content-Type", headerJSON)
@@ -98,7 +105,7 @@ func (ctx *context) JSON(data interface{}) {
 func (ctx *context) XML(data interface{}) {
 	body, err := xmlToBytes(data)
 	if err != nil {
-		ctx.Throw(ErrCodeInvalidXML, err)
+		ctx.Throw(ErrCodeInvalidXML, err, make(map[string]any))
 		return
 	}
 	ctx.Header("Content-Type", headerXML)
