@@ -62,7 +62,8 @@ func main() {
 	//==========================Error Handling==================================
 
 	api.Get("/test", func(ctx rest.Context) {
-		ctx.Throw("CUSTOM_ERROR", errors.New("custom error"), map[string]any{"a": "b", "c": 1})
+		ctx.Set("Hi", "There")
+		ctx.Throw("CUSTOM_ERROR", errors.New("custom error"))
 	})
 
 	api.CatchError("CUSTOM_ERROR", func(err error, ctx rest.Context) {

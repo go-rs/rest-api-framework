@@ -11,18 +11,6 @@ type Handler func(Context)
 
 type ErrorHandler func(error, Context)
 
-type API interface {
-	Use(Handler)
-	Router(string) Router
-	Get(string, Handler)
-	Post(string, Handler)
-	Put(string, Handler)
-	Delete(string, Handler)
-	CatchError(string, ErrorHandler)
-	UncaughtException(ErrorHandler)
-	ServeHTTP(http.ResponseWriter, *http.Request)
-}
-
 type Router interface {
 	Use(Handler)
 	Router(string) Router
@@ -31,6 +19,12 @@ type Router interface {
 	Put(string, Handler)
 	Delete(string, Handler)
 	CatchError(string, ErrorHandler)
+}
+
+type API interface {
+	Router
+	UncaughtException(ErrorHandler)
+	ServeHTTP(http.ResponseWriter, *http.Request)
 }
 
 type api struct {

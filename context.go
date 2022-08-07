@@ -6,6 +6,7 @@ package rest
 import (
 	"log"
 	"net/http"
+	"sync"
 )
 
 type Context interface {
@@ -13,8 +14,10 @@ type Context interface {
 	Params() map[string]string
 	Status(int) Context
 	Header(string, string) Context
+	Set(string, any)
+	Get(string) any
 	Metadata() map[string]any
-	Throw(string, error, map[string]any)
+	Throw(string, error)
 	JSON(interface{})
 	XML(interface{})
 	Text(string)
@@ -38,17 +41,20 @@ type context struct {
 	r *http.Request
 
 	// for internal purpose
-	params  map[string]string
-	headers map[string]string
-	end     bool
-	status  int
-	code    string
-	err     error
-	options map[string]any
+	params   map[string]string
+	headers  map[string]string
+	metadata map[string]any
+	process  *sync.Mutex
+	end      bool
+	status   int
+	code     string
+	err      error
 }
 
 func (ctx *context) init() {
 	ctx.headers = make(map[string]string)
+	ctx.metadata = make(map[string]any)
+	ctx.process = new(sync.Mutex)
 }
 
 func (ctx *context) destroy() {
@@ -57,6 +63,7 @@ func (ctx *context) destroy() {
 	ctx.headers = nil
 	ctx.params = nil
 	ctx.err = nil
+	ctx.metadata = nil
 }
 
 func (ctx *context) reset() {
@@ -81,21 +88,30 @@ func (ctx *context) Header(key string, value string) Context {
 	return ctx
 }
 
-func (ctx *context) Metadata() map[string]any {
-	return ctx.options
+func (ctx *context) Set(key string, value any) {
+	ctx.process.Lock()
+	ctx.metadata[key] = value
+	ctx.process.Unlock()
 }
 
-func (ctx *context) Throw(code string, err error, options map[string]any) {
+func (ctx *context) Get(key string) any {
+	return ctx.metadata[key]
+}
+
+func (ctx *context) Metadata() map[string]any {
+	return ctx.metadata
+}
+
+func (ctx *context) Throw(code string, err error) {
 	ctx.code = code
 	ctx.err = err
-	ctx.options = options
 }
 
 // send JSON
 func (ctx *context) JSON(data any) {
 	body, err := jsonToBytes(data)
 	if err != nil {
-		ctx.Throw(ErrCodeInvalidJSON, err, make(map[string]any))
+		ctx.Throw(ErrCodeInvalidJSON, err)
 		return
 	}
 	ctx.Header("Content-Type", headerJSON)
@@ -105,7 +121,7 @@ func (ctx *context) JSON(data any) {
 func (ctx *context) XML(data interface{}) {
 	body, err := xmlToBytes(data)
 	if err != nil {
-		ctx.Throw(ErrCodeInvalidXML, err, make(map[string]any))
+		ctx.Throw(ErrCodeInvalidXML, err)
 		return
 	}
 	ctx.Header("Content-Type", headerXML)

@@ -25,16 +25,15 @@ func (h *requestHandler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		w: w,
 		r: r,
 	}
-
+	defer ctx.destroy()
 	// initialize the context and also prepare destroy
 	ctx.init()
-	defer ctx.destroy()
 
 	// recovery/handle any runtime error
 	defer func() {
 		err := recover()
 		if err != nil {
-			ctx.Throw(ErrCodeRuntimeError, fmt.Errorf("%v", err), make(map[string]any))
+			ctx.Throw(ErrCodeRuntimeError, fmt.Errorf("%v", err))
 		}
 		h.caughtExceptions(ctx)
 	}()
@@ -80,7 +79,7 @@ func (h *requestHandler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// if no error and still not ended that means its NOT FOUND
 	if !ctx.end && ctx.code == "" && ctx.err == nil {
-		ctx.Throw(ErrCodeNotFound, errors.New("URL not found"), make(map[string]any))
+		ctx.Throw(ErrCodeNotFound, errors.New("URL not found"))
 	}
 
 	// STEP 3: errors
