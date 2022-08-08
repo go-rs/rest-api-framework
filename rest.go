@@ -1,5 +1,5 @@
 // go-rs/rest-api-framework
-// Copyright(c) 2019-2020 Roshan Gade. All rights reserved.
+// Copyright(c) 2019-2022 Roshan Gade. All rights reserved.
 // MIT Licensed
 package rest
 
