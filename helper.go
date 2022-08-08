@@ -89,17 +89,10 @@ func trim(str string) string {
 }
 
 func jsonToBytes(data any) ([]byte, error) {
-	if body, isString := data.(string); isString {
-		return json.RawMessage(body).MarshalJSON()
-	}
-
 	//standard JSON as per RFC 7159
 	return json.Marshal(data)
 }
 
-func xmlToBytes(data interface{}) ([]byte, error) {
-	if body, isString := data.(string); isString {
-		return []byte(body), nil
-	}
+func xmlToBytes(data any) ([]byte, error) {
 	return xml.Marshal(data)
 }

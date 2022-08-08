@@ -15,55 +15,57 @@ type Context interface {
 	Status(int) Context
 	Header(string, string) Context
 	Set(string, any)
-	Get(string) any
-	Metadata() map[string]any
+	Get(string) (any, bool)
+	Unset(string)
 	Throw(string, error)
-	JSON(interface{})
-	XML(interface{})
+	JSON(any)
+	XML(any)
 	Text(string)
 	Write([]byte)
 	End()
 }
 
-var (
+const (
 	ErrCodeInvalidJSON = "INVALID_JSON"
 	ErrCodeInvalidXML  = "INVALID_XML"
 )
 
-var (
+const HeaderContentType = "Content-Type"
+
+const (
 	headerText = "text/plain"
 	headerJSON = "application/json"
 	headerXML  = "text/xml"
 )
 
 type context struct {
-	w http.ResponseWriter
-	r *http.Request
+	w    http.ResponseWriter
+	r    *http.Request
+	meta sync.Map
 
 	// for internal purpose
-	params   map[string]string
-	headers  map[string]string
-	metadata map[string]any
-	process  *sync.Mutex
-	end      bool
-	status   int
-	code     string
-	err      error
+	params  map[string]string
+	headers map[string]string
+	end     bool
+	status  int
+	code    string
+	err     error
 }
 
 func (ctx *context) init() {
 	ctx.headers = make(map[string]string)
-	ctx.metadata = make(map[string]any)
-	ctx.process = new(sync.Mutex)
 }
 
 func (ctx *context) destroy() {
 	ctx.w = nil
 	ctx.r = nil
-	ctx.headers = nil
+	ctx.meta = sync.Map{}
 	ctx.params = nil
+	ctx.headers = nil
+	ctx.end = true
+	ctx.status = 0
+	ctx.code = ""
 	ctx.err = nil
-	ctx.metadata = nil
 }
 
 func (ctx *context) reset() {
@@ -89,17 +91,15 @@ func (ctx *context) Header(key string, value string) Context {
 }
 
 func (ctx *context) Set(key string, value any) {
-	ctx.process.Lock()
-	ctx.metadata[key] = value
-	ctx.process.Unlock()
+	ctx.meta.Store(key, value)
 }
 
-func (ctx *context) Get(key string) any {
-	return ctx.metadata[key]
+func (ctx *context) Get(key string) (any, bool) {
+	return ctx.meta.Load(key)
 }
 
-func (ctx *context) Metadata() map[string]any {
-	return ctx.metadata
+func (ctx *context) Unset(key string) {
+	ctx.meta.Delete(key)
 }
 
 func (ctx *context) Throw(code string, err error) {
@@ -114,33 +114,39 @@ func (ctx *context) JSON(data any) {
 		ctx.Throw(ErrCodeInvalidJSON, err)
 		return
 	}
-	ctx.Header("Content-Type", headerJSON)
+	if _, exists := ctx.headers[HeaderContentType]; !exists {
+		ctx.Header(HeaderContentType, headerJSON)
+	}
 	ctx.write(body)
 }
 
-func (ctx *context) XML(data interface{}) {
+func (ctx *context) XML(data any) {
 	body, err := xmlToBytes(data)
 	if err != nil {
 		ctx.Throw(ErrCodeInvalidXML, err)
 		return
 	}
-	ctx.Header("Content-Type", headerXML)
+	if _, exists := ctx.headers[HeaderContentType]; !exists {
+		ctx.Header(HeaderContentType, headerXML)
+	}
 	ctx.write(body)
 }
 
 // send Raw
 func (ctx *context) Text(data string) {
-	ctx.Header("Content-Type", headerText)
+	if _, exists := ctx.headers[HeaderContentType]; !exists {
+		ctx.Header(HeaderContentType, headerText)
+	}
 	ctx.write([]byte(data))
+}
+
+func (ctx *context) Write(data []byte) {
+	ctx.write(data)
 }
 
 // send blank
 func (ctx *context) End() {
 	ctx.write(nil)
-}
-
-func (ctx *context) Write(data []byte) {
-	ctx.write(data)
 }
 
 // write bytes in response
@@ -179,7 +185,7 @@ func (ctx *context) unhandledException() {
 	if ctx.err != nil {
 		ctx.reset()
 
-		ctx.Header("Content-Type", headerText)
+		ctx.Header(HeaderContentType, headerText)
 
 		if ctx.code == ErrCodeNotFound {
 			ctx.Status(http.StatusNotFound)

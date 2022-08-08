@@ -29,7 +29,7 @@ func TestContext_init(t *testing.T) {
 func TestContext_destroy(t *testing.T) {
 	ctx.destroy()
 
-	if ctx.w != nil || ctx.r != nil || ctx.headers != nil {
+	if ctx.w != nil || ctx.r != nil {
 		t.Error("context.destroy() should destroy the context")
 	}
 }
@@ -90,7 +90,7 @@ func TestContext_Throw(t *testing.T) {
 }
 
 func TestContext_JSON(t *testing.T) {
-	res := "{\"message\":\"Hello, World!\"}"
+	res := map[string]any{"message": "Hello, World!"}
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
 	ctx = &context{
@@ -103,8 +103,8 @@ func TestContext_JSON(t *testing.T) {
 	ctx.JSON(res)
 
 	body, err := ioutil.ReadAll(w.Body)
-
-	if err != nil || string(body) != res {
+	var expected = `{"message":"Hello, World!"}`
+	if err != nil || string(body) != expected {
 		t.Error("context.JSON() should write a response in JSON format")
 	}
 
@@ -114,7 +114,10 @@ func TestContext_JSON(t *testing.T) {
 }
 
 func TestContext_XML(t *testing.T) {
-	res := "<message>Hello, World!</message>"
+	type Message struct {
+		Data string `xml:"data"`
+	}
+
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
 	ctx = &context{
@@ -124,11 +127,12 @@ func TestContext_XML(t *testing.T) {
 	ctx.init()
 	defer ctx.destroy()
 
-	ctx.XML(res)
+	ctx.XML(&Message{Data: "Hello, World!"})
 
 	body, err := ioutil.ReadAll(w.Body)
+	var expected = "<Message><data>Hello, World!</data></Message>"
 
-	if err != nil || string(body) != res {
+	if err != nil || string(body) != expected {
 		t.Error("context.XML() should write a response in XML format")
 	}
 

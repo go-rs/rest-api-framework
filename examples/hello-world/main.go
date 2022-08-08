@@ -62,13 +62,14 @@ func main() {
 	//==========================Error Handling==================================
 
 	api.Get("/test", func(ctx rest.Context) {
-		ctx.Set("Hi", "There")
+		ctx.Set("Hi", "{\"a\": 1}")
 		ctx.Throw("CUSTOM_ERROR", errors.New("custom error"))
 	})
 
 	api.CatchError("CUSTOM_ERROR", func(err error, ctx rest.Context) {
 		//ctx.Status(412).JSON("{\"a\": 1}")
-		ctx.Status(412).JSON(ctx.Metadata())
+		text, _ := ctx.Get("Hi")
+		ctx.Status(412).Header("Content-Type", "application/json; charset=utf-8").Text(text.(string))
 	})
 
 	http.ListenAndServe(":8080", api)
